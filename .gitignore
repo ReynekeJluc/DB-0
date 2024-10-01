@@ -1,0 +1,54 @@
+# Python Bytecode
+__pycache__/
+*.py[cod]
+
+# Virtual Environment
+venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+
+# Distribution / packaging
+*.egg-info/
+dist/
+build/
+*.egg
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-workspace
+*.sublime-project
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# Test and coverage reports
+.coverage
+coverage.xml
+*.cover
+*.log
+nosetests.xml
+pytest.xml
+*.pdb
+
+# SQLite database files (if used)
+*.sqlite
+*.db
+
+# Environment variable files
+.env
+.env.local
+.env.*.local
+
+# Alembic versioning
+versions/
+
+# Other files
+*.bak
+*.tmp
+*.DS_Store
+Thumbs.db
