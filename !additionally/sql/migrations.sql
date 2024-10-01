@@ -1,71 +1,84 @@
---Создание
-
-CREATE TABLE Brands (
-    id INTEGER PRIMARY KEY,
-		name VARCHAR(50) NOT NULL,
-		descriptions TEXT NOT NULL,
+	-- Создание таблицы brands и вставка данных
+CREATE TABLE brands (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT
 );
 
-CREATE TABLE Sneakers (
-    id INTEGER PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    price DECIMAL(10, 2) NOT NULL,
-    brand_id FOREIGN KEY REFERENCES Brands(id),
+INSERT INTO brands (id, name, description) VALUES
+(1, 'Reebok', 'Иконический бренд с богатой историей.'),
+(2, 'Adidas', 'Качественная обувь для профессиональных спортсменов.'),
+(3, 'Puma', 'Стиль и инновации в каждой модели.'),
+(4, 'Fila', 'Доступные цены без потери качества.'),
+(5, 'Converse', 'Лидер в мире кроссовок и активной одежды.'),
+(6, 'Nike', 'Экологичные материалы для ответственного потребления.'),
+(7, 'Demix', 'Популярный среди молодежи и модников.'),
+(8, 'Asics', 'Специальные коллекции для уникального стиля.'),
+(9, 'Kappa', 'Комфорт и производительность в каждой паре.'),
+(10, 'Gucci', 'Бренд, который вдохновляет на движение.');
+
+-- Создание таблицы sneakers и вставка данных
+CREATE TABLE sneakers (
+    id SERIAL PRIMARY KEY,
+    size INT NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    price DECIMAL(10, 2),
+    brand_id INT REFERENCES brands(id)
 );
 
-CREATE TABLE Orders (
-    id INTEGER PRIMARY KEY,
-    amount DECIMAL(10, 2) NOT NULL,
-    order_date TIMESTAMP DEFAULT NOW(),
+INSERT INTO sneakers (id, size, name, description, price, brand_id) VALUES
+(1, 30, 'Club C Grounds', 'Легкие и стильные кроссовки для бега.', 75.00, 1),
+(2, 31, 'Air Max', 'Удобная обувь с хорошей амортизацией.', 120.00, 3),
+(3, 32, 'UltraBoost', 'Элегантный дизайн для повседневной носки.', 180.00, 5),
+(4, 33, 'Suede Classic', 'Дышащая сетка, идеальная для лета.', 65.00, 2),
+(5, 34, '574 Core', 'Прочные материалы для долгого использования.', 80.00, 4),
+(6, 35, 'Gel-Lyte III', 'Кроссовки с ярким логотипом на боках.', 100.00, 8),
+(7, 36, 'PLAY COMME DES GARCONS', 'Отличное сцепление для активного отдыха.', 150.00, 6),
+(8, 37, 'Old Skool', 'Спортивная обувь с уникальным цветовым решением.', 60.00, 7),
+(9, 38, 'Disruptor 2', 'Мягкая подошва для комфорта и поддержки.', 85.00, 10),
+(10, 39, 'HOVR Phantom', 'Идеальный выбор для тренировки и прогулок.', 110.00, 9);
+
+-- Создание таблицы orders и вставка данных
+CREATE TABLE orders (
+    id SERIAL PRIMARY KEY,
+    order_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE Order_sneakers (
-		quantity INTEGER NOT NULL DEFAULT 1,
-    order_id INTEGER FOREIGN KEY REFERENCES Orders(id),
-    sneaker_id INTEGER FOREIGN KEY REFERENCES Sneakers(id),
-    PRIMARY KEY (order_id, sneaker_id),
+INSERT INTO orders (id) VALUES (1), (2), (3), (4), (5), (6), (7);
+
+-- Создание таблицы orders_sneakers и вставка данных
+CREATE TABLE orders_sneakers (
+    order_id INT REFERENCES orders(id),
+    sneaker_id INT REFERENCES sneakers(id),
+    quantity INT NOT NULL DEFAULT 1,
+    price DECIMAL(10, 2),
+    PRIMARY KEY (order_id, sneaker_id)
 );
 
---Добавление
+INSERT INTO orders_sneakers (order_id, sneaker_id, quantity, price) VALUES
+(1, 1, 1, 1000),
+(1, 2, 3, 1200),
+(2, 3, 100, 1300),
+(2, 4, 2, 1400),
+(3, 5, 1, 1500),
+(4, 6, 1, 1600),
+(5, 7, 1, 1700);
 
-INSERT INTO Brands (id, name, description) VALUES 
-	(1, 'Reebok', 'Good'), 
-	(2, 'Adidas', 'Perfectly'), 
-	(3, 'Puma', 'Wonderful!'), 
-	(4, 'Fila', 'Cool'), 
-	(5, 'Converse', 'Not bad'), 
-	(6, 'Nike', 'Wonderful!'), 
-	(7, 'Demix', 'I like it'), 
-	(8, 'Asics', 'Interesting'), 
-	(9, 'Kappa', 'Beautifully'), 
-	(10, 'Gucci', 'Marvelous');
+-- Создание таблицы payment и вставка данных
+CREATE TABLE payment (
+    id SERIAL PRIMARY KEY,
+    status VARCHAR(50) NOT NULL,
+    provider VARCHAR(50) NOT NULL,
+    order_id INT REFERENCES orders(id),
+    date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 
-INSERT INTO Sneakers (id, name, price, brand_id) VALUES 
-	(1, 'Club C Grounds', 75.00, 1), 
-	(2, 'Air Max', 120.00, 3), 
-	(3, 'UltraBoost', 180.00, 5), 
-	(4, 'Suede Classic', 65.00, 2), 
-	(5, '574 Core', 80.00, 4), 
-	(6, 'Gel-Lyte III', 100.00, 8), 
-	(7, 'PLAY COMME DES GARCONS', 150.00, 6), 
-	(8, 'Old Skool', 60.00, 7), 
-	(9, 'Disruptor 2', 85.00, 10), 
-	(10, 'HOVR Phantom', 110.00, 9);
-
-INSERT INTO Orders (id, amount) VALUES 
-	(1, 1000), 
-	(2, 1400), 
-	(3, 5000), 
-	(4, 1100), 
-	(5, 5500), 
-	(6, 61000), 
-	(7, 5000);
-
-INSERT INTO Order_sneakers (order_id, sneaker_id) VALUES 
-	(1, 1),
-	(1, 2),
-	(2, 3),
-	(2, 4),
-	(3, 5),
-	(4, 6),
-	(5, 7);
+INSERT INTO payment (id, status, provider, order_id) VALUES
+(1, 'paid', 'Tinkoff', 1),
+(2, 'paid', 'Alfa', 2),
+(3, 'paid', 'Tochka', 3),
+(4, 'paid', 'Sberbank', 4),
+(5, 'paid', 'Tochka', 5),
+(6, 'paid', 'Sberbank', 6),
+(7, 'paid', 'Alfa', 7);
