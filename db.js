@@ -1,14 +1,10 @@
 import { Sequelize } from 'sequelize';
 
+const { DB_USER, DB_PASS, DB_HOST, DB_NAME } = process.env;
+
 const sequelize = new Sequelize(
-	process.env.DB_NAME,
-	process.env.DB_USER,
-	process.env.DB_PASS,
-	{
-		dialect: 'postgres',
-		host: process.env.DB_HOST,
-		port: process.env.DB_PORT,
-	}
+	`postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}.oregon-postgres.render.com/${DB_NAME}?ssl=true`,
+	{ dialect: 'postgres' }
 );
 
 export default sequelize;
