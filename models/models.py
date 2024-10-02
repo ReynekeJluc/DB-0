@@ -16,7 +16,7 @@ sneakers = Table(
 	Column("id", Integer, primary_key=True),
 	Column("name", String(255), nullable=False),
 	Column("price", Numeric(10, 2), nullable=False),
-	Column("size", Numeric(5, 1), nullable=False),
+	Column("size", Numeric(3, 1), nullable=False),
 	Column("description", Text, nullable=True),
 	Column("brand_id", Integer, ForeignKey("brands.id"), nullable=False),
 )
@@ -25,6 +25,8 @@ orders = Table(
 	"orders",
 	metaData,
 	Column("id", Integer, primary_key=True),
+	Column("name_customer", String(255), nullable=False),
+	Column("pickup_code", String(30), nullable=False),
 	Column("order_date", TIMESTAMP, server_default=func.now()),                        #текущие дата и время данного компьютера
 )
 
