@@ -49,13 +49,13 @@ CREATE TABLE orders (
 );
 
 INSERT INTO orders (id, name_customer, pickup_code) VALUES 
-	(1, "John", "1351147"), 
-	(2, "Maria", "61441147"), 
-	(3, "David", "1461147"), 
-	(4, "Joseph", "1464717447"),
-	(5, "Robert", "147147"), 
-	(6, "Lola", "14741714"),
-	(7, "Olga", "71785722");
+	(1, "John", "1351147641"), 
+	(2, "Maria", "61441147411"), 
+	(3, "David", "1461147461"), 
+	(4, "Joseph", "1464717447174"),
+	(5, "Robert", "14716471747"), 
+	(6, "Lola", "147417147417"),
+	(7, "Olga", "717857221785");
 
 -- Создание таблицы orders_sneakers и вставка данных
 CREATE TABLE orders_sneakers (
