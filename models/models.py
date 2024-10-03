@@ -26,7 +26,7 @@ orders = Table(
 	metaData,
 	Column("id", Integer, primary_key=True),
 	Column("name_customer", String(255), nullable=False),
-	Column("pickup_code", String(30), nullable=False),
+	Column("pickup_code", Text, nullable=False),
 	Column("order_date", TIMESTAMP, server_default=func.now()),                        #текущие дата и время данного компьютера
 )
 
