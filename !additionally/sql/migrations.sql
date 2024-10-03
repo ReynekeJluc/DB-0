@@ -44,8 +44,7 @@ CREATE TABLE orders (
     id SERIAL PRIMARY KEY,
     name_customer VARCHAR(255) NOT NULL,
     order_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    pickup_code VARCHAR(30) NOT NULL,
-	CHECK (LENGTH(pickup_code) BETWEEN 10 AND 30)
+    pickup_code TEXT NOT NULL
 );
 
 INSERT INTO orders (id, name_customer, pickup_code) VALUES 
