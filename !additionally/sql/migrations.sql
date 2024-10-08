@@ -24,7 +24,7 @@ CREATE TABLE sneakers (
     name VARCHAR(255) NOT NULL,
     description TEXT,
     price DECIMAL(10, 2),
-    brand_id INT REFERENCES brands(id)
+    brand_id INT REFERENCES brands(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 INSERT INTO sneakers (id, size, name, description, price, brand_id) VALUES
@@ -58,8 +58,8 @@ INSERT INTO orders (id, name_customer, pickup_code) VALUES
 
 -- Создание таблицы orders_sneakers и вставка данных
 CREATE TABLE orders_sneakers (
-    order_id INT REFERENCES orders(id),
-    sneaker_id INT REFERENCES sneakers(id),
+    order_id INT REFERENCES orders(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    sneaker_id INT REFERENCES sneakers(id) ON DELETE CASCADE ON UPDATE CASCADE,
     quantity INT NOT NULL DEFAULT 1,
     price DECIMAL(10, 2),
     PRIMARY KEY (order_id, sneaker_id)
@@ -79,7 +79,7 @@ CREATE TABLE payment (
     id SERIAL PRIMARY KEY,
     status VARCHAR(50) NOT NULL,
     provider VARCHAR(50) NOT NULL,
-    order_id INT REFERENCES orders(id),
+    order_id INT REFERENCES orders(id) ON DELETE CASCADE ON UPDATE CASCADE,
     date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
