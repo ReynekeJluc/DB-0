@@ -1,6 +1,12 @@
-from sqlalchemy import MetaData, Table, Column, Integer, String, Text, TIMESTAMP, func, Numeric, ForeignKey
+from sqlalchemy import MetaData, Table, Column, Integer, String, Text, TIMESTAMP, func, Numeric, ForeignKey, Enum
 
 metaData = MetaData();
+
+class OrderStatus(Enum):
+	PENDING = "Pending"
+	SHIPPED = "Shipped"
+	DELIVERED = "Delivered"
+	CANCELED = "Canceled"
 
 brands = Table(
 	"brands",
@@ -39,12 +45,22 @@ order_sneakers = Table(
 	Column("price", Numeric(10, 2), nullable=False),
 )
 
+providers = Table(
+	"providers",
+	metaData,
+	Column("id", Integer, primary_key=True),
+	Column("name", String(255), nullable=False),
+	Column("address", Text, nullable=False),
+	Column("phone", String(10), nullable=False),
+	Column("email", String(255), nullable=False),
+)
+
 payment = Table(
 	"payment",
 	metaData,
 	Column("id", Integer, primary_key=True),
-	Column("status", String(50), nullable=False),
-	Column("provider", String(255), nullable=False),
+	Column("status", Enum(OrderStatus), nullable=False),
 	Column("date", TIMESTAMP, server_default=func.now()),
+	Column("provider", Integer, ForeignKey("providers.id", ondelete='CASCADE', onupdate='CASCADE'),nullable=False),
 	Column("order_id", Integer, ForeignKey("orders.id", ondelete='CASCADE', onupdate='CASCADE'), nullable=False ),
 )
