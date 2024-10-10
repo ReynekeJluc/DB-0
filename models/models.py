@@ -61,6 +61,6 @@ payment = Table(
 	Column("id", Integer, primary_key=True),
 	Column("status", Enum(OrderStatus), nullable=False),
 	Column("date", TIMESTAMP, server_default=func.now()),
-	Column("provider", Integer, ForeignKey("providers.id", ondelete='CASCADE', onupdate='CASCADE'),nullable=False),
+	Column("provider_id", Integer, ForeignKey("providers.id", ondelete='CASCADE', onupdate='CASCADE'),nullable=False),
 	Column("order_id", Integer, ForeignKey("orders.id", ondelete='CASCADE', onupdate='CASCADE'), nullable=False ),
 )
