@@ -35,7 +35,7 @@ orders = Table(
 	Column("id", Integer, primary_key=True),
 	Column("name_customer", String(255), nullable=False),
 	Column("pickup_code", JSON, nullable=False),
-	Column("status", Enum(OrderStatus), nullable=False),
+	Column("status", Enum(OrderStatus)),                                               # используем как кэш, а так высчитывать можно напрямую из данных таблицы
 	Column("order_date", TIMESTAMP, server_default=func.now()),                        #текущие дата и время данного компьютера
 )
 
