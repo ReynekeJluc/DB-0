@@ -1,4 +1,4 @@
-from sqlalchemy import MetaData, Table, Column, Integer, String, Text, TIMESTAMP, func, Numeric, ForeignKey, Enum, JSON
+from sqlalchemy import MetaData, Table, Column, Integer, String, Text, TIMESTAMP, func, Numeric, ForeignKey, Enum, JSON, CheckConstraint, UniqueConstraint
 
 metaData = MetaData();
 
@@ -37,7 +37,7 @@ orders = Table(
 	Column("id", Integer, primary_key=True),
 	Column("name_customer", String(255), nullable=False),
 	Column("pickup_code", JSON),                                                       # используем как кэш, а так высчитывать можно напрямую из данных таблицы
-	Column("status", Enum(OrderStatus), nullable=False),                                              
+	Column("status", Enum(OrderStatus.PENDING, OrderStatus.SHIPPED, OrderStatus.DELIVERED, OrderStatus.CANCELED), nullable=False),                                              
 	Column("order_date", TIMESTAMP, server_default=func.now()),                        # текущие дата и время сервера
 	CheckConstraint("LENGTH(TRIM(name_customer)) > 0", name="check_customer_name_not_empty")
 )
@@ -69,7 +69,7 @@ providers = Table(
 payment = Table(
 	"payment",
 	metaData,
-	Column("id", Integer, primary_key=True, ForeignKey("orders.id", ondelete='CASCADE', onupdate='CASCADE')),
+	Column("id", Integer, ForeignKey("orders.id", ondelete='CASCADE', onupdate='CASCADE'), primary_key=True),
 	Column("date", TIMESTAMP, server_default=func.now()),
 	Column("provider_id", Integer, ForeignKey("providers.id", ondelete='CASCADE', onupdate='CASCADE'),nullable=False),
 )
