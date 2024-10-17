@@ -28,7 +28,7 @@ sneakers = Table(
 	Column("description", Text),
 	Column("brand_id", Integer, ForeignKey("brands.id", ondelete='CASCADE', onupdate='CASCADE'), nullable=False),
 	CheckConstraint('price >= 0', name='check_price_positive_1'),                # Ограничение на цену
-    	CheckConstraint('size >= 0', name='check_size_positive'),                    # Ограничение на размер
+    	CheckConstraint('size >= 16', name='check_size_positive'),                    # Ограничение на размер
 )
 
 orders = Table(
@@ -49,7 +49,7 @@ order_sneakers = Table(
 	Column("sneaker_id", Integer, ForeignKey("sneakers.id", ondelete='CASCADE', onupdate='CASCADE'), primary_key=True),
 	Column("quantity", Integer, nullable=False, default=1),
 	Column("price", Numeric(10, 2), nullable=False),
-	CheckConstraint('quantity >= 0', name='check_quantity_positive'),     # Ограничение на количество
+	CheckConstraint('quantity >= 1', name='check_quantity_positive'),     # Ограничение на количество
 	CheckConstraint('price >= 0', name='check_price_positive_2'),         # Ограничение на цену
 )
 
