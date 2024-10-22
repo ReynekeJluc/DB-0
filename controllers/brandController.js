@@ -41,44 +41,48 @@ class BrandController {
 	}
 
 	async update(req, res) {
-		const existingBrand = await brands.findOne({
-			where: {
-				brand: brand,
-				id: { [sequelize.Op.ne]: id },
-			},
-		});
+		try {
+			const { id } = req.params;
+			const { brand, desc } = req.body;
 
-		if (existingBrand) {
-			return res.status(400).json({
-				message: 'A brand with that name already exists',
+			const existingBrand = await brands.findOne({
+				where: {
+					brand: brand,
+					id: { [sequelize.Op.ne]: id },
+				},
 			});
-		}
 
-		const [updatedRows] = await brands.update(
-			{
-				brand: brand,
-				desc: desc,
-			},
-			{
-				where: { id: id },
+			if (existingBrand) {
+				return res.status(400).json({
+					message: 'A brand with that name already exists',
+				});
 			}
-		);
 
-		if (updatedRows === 0) {
-			return res.status(404).json({
-				message: "Couldn't find a brand",
+			const [updatedRows] = await brands.update(
+				{
+					brand: brand,
+					desc: desc,
+				},
+				{
+					where: { id: id },
+				}
+			);
+
+			if (updatedRows === 0) {
+				return res.status(404).json({
+					message: "Couldn't find a brand",
+				});
+			}
+
+			res.json({
+				success: true,
+			});
+		} catch (error) {
+			console.error(error.message);
+			res.status(400).json({
+				error: 'Failed to update the brand',
 			});
 		}
-
-		res.json({
-			success: true,
-		});
-	}
-	catch(error) {
-		console.error(error.message);
-		res.status(400).json({
-			error: 'Failed to update the brand',
-		});
 	}
 
 	async delete(req, res) {
