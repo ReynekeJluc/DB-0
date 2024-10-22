@@ -45,6 +45,7 @@ class BrandController {
 			const { id } = req.params;
 			const { brand, desc } = req.body;
 
+			// Проверяю на существование брэнда с таким же названием
 			const existingBrand = await brands.findOne({
 				where: {
 					brand: brand,
@@ -58,13 +59,14 @@ class BrandController {
 				});
 			}
 
+			// обновляю
 			const [updatedRows] = await brands.update(
 				{
 					brand: brand,
 					desc: desc,
 				},
 				{
-					where: { id: id },
+					where: { id },
 				}
 			);
 
