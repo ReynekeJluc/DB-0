@@ -7,28 +7,34 @@ export default function (sequelize) {
 			order_id: {
 				type: DataTypes.INTEGER,
 				allowNull: false,
-				primaryKey: true,
 				references: {
 					model: 'orders',
 					key: 'id',
 				},
+				primaryKey: true,
 			},
 			sneaker_id: {
 				type: DataTypes.INTEGER,
 				allowNull: false,
-				primaryKey: true,
 				references: {
 					model: 'sneakers',
 					key: 'id',
 				},
+				primaryKey: true,
 			},
 			quantity: {
 				type: DataTypes.INTEGER,
 				allowNull: false,
+				validate: {
+					min: 0,
+				},
 			},
 			price: {
-				type: DataTypes.DECIMAL,
+				type: DataTypes.DECIMAL(10, 2),
 				allowNull: false,
+				validate: {
+					min: 0,
+				},
 			},
 		},
 		{

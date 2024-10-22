@@ -15,12 +15,18 @@ export default function (sequelize) {
 				allowNull: false,
 			},
 			price: {
-				type: DataTypes.DECIMAL,
+				type: DataTypes.DECIMAL(10, 2),
 				allowNull: false,
+				validate: {
+					min: 0,
+				},
 			},
 			size: {
-				type: DataTypes.DECIMAL,
+				type: DataTypes.DECIMAL(3, 1),
 				allowNull: false,
+				validate: {
+					min: 0,
+				},
 			},
 			description: {
 				type: DataTypes.TEXT,

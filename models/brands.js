@@ -13,6 +13,9 @@ export default function (sequelize) {
 			name: {
 				type: DataTypes.STRING(255),
 				allowNull: false,
+				validate: {
+					notEmpty: true,
+				},
 			},
 			description: {
 				type: DataTypes.TEXT,
@@ -28,6 +31,11 @@ export default function (sequelize) {
 					name: 'brands_pkey',
 					unique: true,
 					fields: [{ name: 'id' }],
+				},
+				{
+					name: 'uq_brand_name',
+					unique: true,
+					fields: [{ name: 'name' }],
 				},
 			],
 		}

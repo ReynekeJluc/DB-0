@@ -10,6 +10,20 @@ export default function (sequelize) {
 				allowNull: false,
 				primaryKey: true,
 			},
+			name_customer: {
+				type: DataTypes.STRING(255),
+				allowNull: false,
+				validate: {
+					notEmpty: true,
+				},
+			},
+			pickup_code: {
+				type: DataTypes.JSON,
+				allowNull: false,
+			},
+			status: {
+				type: DataTypes.ENUM('Pending', 'Shipped', 'Delivered', 'Canceled'),
+			},
 			order_date: {
 				type: DataTypes.DATE,
 				allowNull: true,
@@ -25,6 +39,10 @@ export default function (sequelize) {
 					name: 'orders_pkey',
 					unique: true,
 					fields: [{ name: 'id' }],
+				},
+				{
+					name: 'check_customer_name_not_empty',
+					fields: [{ name: 'name_customer' }],
 				},
 			],
 		}
