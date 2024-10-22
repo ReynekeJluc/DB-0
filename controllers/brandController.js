@@ -45,7 +45,7 @@ class BrandController {
 	async update(req, res) {
 		try {
 			const { id } = req.params;
-			const { name, desc } = req.body;
+			const { name, description } = req.body;
 
 			// Проверяю на существование брэнда с таким же названием
 			const existingBrand = await brands.findOne({
@@ -57,7 +57,7 @@ class BrandController {
 
 			if (existingBrand) {
 				return res.status(400).json({
-					message: 'A brand with that name already exists',
+					message: 'A brand with that name already exists or incorrect id',
 				});
 			}
 
@@ -65,7 +65,7 @@ class BrandController {
 			const [updatedRows] = await brands.update(
 				{
 					name: name,
-					desc: desc,
+					description: description,
 				},
 				{
 					where: { id },
