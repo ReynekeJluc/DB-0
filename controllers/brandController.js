@@ -45,12 +45,12 @@ class BrandController {
 	async update(req, res) {
 		try {
 			const { id } = req.params;
-			const { brand, desc } = req.body;
+			const { name, desc } = req.body;
 
 			// Проверяю на существование брэнда с таким же названием
 			const existingBrand = await brands.findOne({
 				where: {
-					brand: brand,
+					name: name,
 					id: { [Op.ne]: id },
 				},
 			});
@@ -64,7 +64,7 @@ class BrandController {
 			// обновляю
 			const [updatedRows] = await brands.update(
 				{
-					brand: brand,
+					name: name,
 					desc: desc,
 				},
 				{
