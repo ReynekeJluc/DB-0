@@ -1,5 +1,7 @@
 import { DataTypes } from 'sequelize';
 
+// Используем sequelize-auto для авто подгрузки моделей из бд / sequelize-auto -o "/models" -d <db-name> -h <host> -u <user> -p <port> -x <password> -e postgres
+
 export default function (sequelize) {
 	return sequelize.define(
 		'brands',
