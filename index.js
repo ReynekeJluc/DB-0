@@ -16,7 +16,7 @@ app.use(cors({ origin: '*' })); // доступ с любого домена
 app.use(express.json()); // для работы с json
 app.use('/api', router);
 
-const models = initModels(sequelize);
+const models = initModels(sequelize);                      // инициализация всех моделей и их привязка к существующим в бд
 const { brands, orders, sneakers, payment } = models;
 
 // запросы
@@ -29,8 +29,8 @@ app.get('/', (req, res) => {
 
 const start = async () => {
 	try {
-		await sequelize.authenticate();
-		await sequelize.sync();
+		await sequelize.authenticate();           // Проверка можно ли подключиться к бд
+		await sequelize.sync();                   // синхронизация моделей и структур бд
 
 		app.listen(PORT, err => {
 			if (err) {
