@@ -1,6 +1,9 @@
 import { DataTypes } from 'sequelize';
+import sequelize from '../db.js'; // Импортирую sequelize
+import initModels from '../models/init-models.js';
 
-// Используем sequelize-auto для авто подгрузки моделей из бд / sequelize-auto -o "/models" -d <db-name> -h <host> -u <user> -p <port> -x <password> -e postgres
+const models = initModels(sequelize); // Инициализирую модели
+const { brands } = models; // Деструктурирую brands из моделей
 
 export default function (sequelize) {
 	return sequelize.define(
@@ -16,7 +19,20 @@ export default function (sequelize) {
 				type: DataTypes.STRING(255),
 				allowNull: false,
 				validate: {
-					notEmpty: true,
+					isUnique: async (value, next) => {
+						const trimmedValue = value.trim();
+						const brand = await brands.findOne({
+							where: { name: trimmedValue },
+						});
+						if (brand) {
+							return next('Brand name must be unique');
+						}
+						next();
+					},
+				},
+				set(value) {
+					// Убираем пробелы перед сохранением
+					this.setDataValue('name', value.trim());
 				},
 			},
 			description: {
@@ -40,6 +56,14 @@ export default function (sequelize) {
 					fields: [{ name: 'name' }],
 				},
 			],
+			// Ограничение для проверки пустоты и лишних пробелов в имени
+			validate: {
+				nameNotEmpty() {
+					if (this.name.trim().length === 0) {
+						throw new Error('Brand name cannot be empty or just whitespace');
+					}
+				},
+			},
 		}
 	);
 }

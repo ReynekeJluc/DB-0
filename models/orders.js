@@ -23,6 +23,7 @@ export default function (sequelize) {
 			},
 			status: {
 				type: DataTypes.ENUM('Pending', 'Shipped', 'Delivered', 'Canceled'),
+				allowNull: true,
 			},
 			order_date: {
 				type: DataTypes.DATE,
@@ -40,11 +41,14 @@ export default function (sequelize) {
 					unique: true,
 					fields: [{ name: 'id' }],
 				},
-				{
-					name: 'check_customer_name_not_empty',
-					fields: [{ name: 'name_customer' }],
-				},
 			],
+			validate: {
+				nameNotEmpty() {
+					if (this.name_customer.trim().length === 0) {
+						throw new Error('Customer name cannot be empty or just whitespace');
+					}
+				},
+			},
 		}
 	);
 }

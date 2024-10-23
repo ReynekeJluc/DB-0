@@ -2,7 +2,7 @@ import { DataTypes } from 'sequelize';
 
 export default function (sequelize) {
 	return sequelize.define(
-		'sneakers',
+		'providers',
 		{
 			id: {
 				autoIncrement: true,
@@ -14,35 +14,27 @@ export default function (sequelize) {
 				type: DataTypes.STRING(255),
 				allowNull: false,
 			},
-			price: {
-				type: DataTypes.DECIMAL(10, 2),
-				allowNull: false,
-				validate: {
-					min: 0,
-				},
-			},
-			size: {
-				type: DataTypes.DECIMAL(3, 1),
-				allowNull: false,
-				validate: {
-					min: 0,
-				},
-			},
-			description: {
+			address: {
 				type: DataTypes.TEXT,
-				allowNull: true,
-			},
-			brand_id: {
-				type: DataTypes.INTEGER,
 				allowNull: false,
-				references: {
-					model: 'brands',
-					key: 'id',
+			},
+			phone: {
+				type: DataTypes.STRING(10),
+				allowNull: false,
+				validate: {
+					is: /^[0-9]{10}$/,
+				},
+			},
+			email: {
+				type: DataTypes.STRING(255),
+				allowNull: false,
+				validate: {
+					isEmail: true,
 				},
 			},
 		},
 		{
-			tableName: 'sneakers',
+			tableName: 'providers',
 			schema: 'public',
 			timestamps: false,
 		}

@@ -41,13 +41,6 @@ export default function (sequelize) {
 			tableName: 'orders_sneakers',
 			schema: 'public',
 			timestamps: false,
-			indexes: [
-				{
-					name: 'orders_sneakers_pkey',
-					unique: true,
-					fields: [{ name: 'order_id' }, { name: 'sneaker_id' }],
-				},
-			],
 		}
 	);
 }

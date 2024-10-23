@@ -10,39 +10,24 @@ export default function (sequelize) {
 				allowNull: false,
 				primaryKey: true,
 			},
-			status: {
-				type: DataTypes.STRING(50),
+			provider_id: {
+				type: DataTypes.INTEGER,
 				allowNull: false,
-			},
-			provider: {
-				type: DataTypes.STRING(255),
-				allowNull: false,
+				references: {
+					model: 'providers',
+					key: 'id',
+				},
 			},
 			date: {
 				type: DataTypes.DATE,
 				allowNull: true,
 				defaultValue: sequelize.fn('now'),
 			},
-			order_id: {
-				type: DataTypes.INTEGER,
-				allowNull: false,
-				references: {
-					model: 'orders',
-					key: 'id',
-				},
-			},
 		},
 		{
 			tableName: 'payment',
 			schema: 'public',
 			timestamps: false,
-			indexes: [
-				{
-					name: 'payment_pkey',
-					unique: true,
-					fields: [{ name: 'id' }],
-				},
-			],
 		}
 	);
 }

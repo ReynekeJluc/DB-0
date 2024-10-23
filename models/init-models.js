@@ -4,6 +4,7 @@ import brands from './brands.js';
 import orders from './orders.js';
 import orders_sneakers from './orders_sneakers.js';
 import payment from './payment.js';
+import providers from './providers.js';
 import sneakers from './sneakers.js';
 
 export default function initModels(sequelize) {
@@ -13,8 +14,9 @@ export default function initModels(sequelize) {
 	const orderSneakerModel = orders_sneakers(sequelize, DataTypes);
 	const paymentModel = payment(sequelize, DataTypes);
 	const sneakerModel = sneakers(sequelize, DataTypes);
+	const providersModel = providers(sequelize, DataTypes);
 
-	// Определение связей между моделями
+	// Явная связь
 	orderModel.belongsToMany(sneakerModel, {
 		as: 'sneaker_id_sneakers',
 		through: orderSneakerModel,
@@ -27,8 +29,18 @@ export default function initModels(sequelize) {
 		foreignKey: 'sneaker_id',
 		otherKey: 'order_id',
 	});
-	sneakerModel.belongsTo(brandModel, { as: 'brand', foreignKey: 'brand_id' });
-	brandModel.hasMany(sneakerModel, { as: 'sneakers', foreignKey: 'brand_id' });
+
+	// 1:N Sneakers - Brands
+	sneakerModel.belongsTo(brandModel, {
+		as: 'brand',
+		foreignKey: 'brand_id',
+	});
+	brandModel.hasMany(sneakerModel, {
+		as: 'sneakers',
+		foreignKey: 'brand_id',
+	});
+
+	// 1:N Order_Sneakers - Orders && Order_Sneakers - Sneakers
 	orderSneakerModel.belongsTo(orderModel, {
 		as: 'order',
 		foreignKey: 'order_id',
@@ -37,8 +49,7 @@ export default function initModels(sequelize) {
 		as: 'orders_sneakers',
 		foreignKey: 'order_id',
 	});
-	paymentModel.belongsTo(orderModel, { as: 'order', foreignKey: 'order_id' });
-	orderModel.hasMany(paymentModel, { as: 'payments', foreignKey: 'order_id' });
+
 	orderSneakerModel.belongsTo(sneakerModel, {
 		as: 'sneaker',
 		foreignKey: 'sneaker_id',
@@ -46,6 +57,25 @@ export default function initModels(sequelize) {
 	sneakerModel.hasMany(orderSneakerModel, {
 		as: 'orders_sneakers',
 		foreignKey: 'sneaker_id',
+	});
+
+	// 0:1 Payment - Orders
+	paymentModel.belongsTo(orderModel, {
+		foreignKey: 'order_id',
+		allowNull: true,
+	});
+	orderModel.hasOne(paymentModel, {
+		foreignKey: 'order_id',
+	});
+
+	// 1:1 Payment - Providers
+	paymentModel.belongsTo(providersModel, {
+		as: 'provider',
+		foreignKey: 'provider_id',
+	});
+	providersModel.hasOne(paymentModel, {
+		as: 'payments',
+		foreignKey: 'provider_id',
 	});
 
 	return {

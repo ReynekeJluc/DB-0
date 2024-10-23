@@ -1,10 +1,11 @@
 import sequelize from '../db.js'; // Импортирую sequelize
 import initModels from '../models/init-models.js'; // Импортирую функцию инициализации
 
-import { Op } from 'sequelize';             // набор операторов для создания условий 
+import { Op } from 'sequelize'; // набор операторов для создания условий
 
 const models = initModels(sequelize); // Инициализирую модели
 const { brands } = models; // Деструктурирую brands из моделей
+const { sneakers } = models; // Деструктурирую sneakers из моделей
 
 class BrandController {
 	async create(req, res) {
@@ -51,7 +52,7 @@ class BrandController {
 			const existingBrand = await brands.findOne({
 				where: {
 					name: name,
-					id: { [Op.ne]: id },           // Op.ne = не равно
+					id: { [Op.ne]: id }, // Op.ne = не равно, чтобы не считать саму обновляемую запись
 				},
 			});
 
@@ -101,6 +102,12 @@ class BrandController {
 
 			res.status(200).send({ message: 'Brand deleted successfully' });
 		} catch (error) {
+			// Обработка ошибок внешнего ключа
+			if (error.name === 'SequelizeForeignKeyConstraintError') {
+				return res.status(400).json({
+					message: 'Cannot delete brand, as it is referenced by sneakers.',
+				});
+			}
 			res.status(500).json({ error: error.message });
 		}
 	}
@@ -115,15 +122,41 @@ class BrandController {
 		const idsArray = ids.split(',').map(Number);
 
 		try {
-			const deletedCount = await brands.destroy({
+			// Сначала находим бренды, которые можно удалить
+			const brandsToDelete = await brands.findAll({
 				where: {
 					id: idsArray,
 				},
+				include: [
+					{
+						model: sneakers,
+						as: 'sneakers', // Указываем алиас (альтернативное название для связей, для избежания конфликтов именования)
+						required: false, // Получаем бренды даже если у них нет связанных кроссовок
+					},
+				],
 			});
 
-			res
-				.status(200)
-				.json({ message: `${deletedCount} brands deleted successfully.` });
+			// Фильтруем только те бренды, у которых нет связанных кроссовок
+			const deletableBrands = brandsToDelete.filter(
+				brand => !brand.sneakers.length // brand.sneakers.length содержит количество связанных кроссовок
+			);
+
+			if (deletableBrands.length === 0) {
+				return res.status(400).json({
+					message: 'No brands can be deleted due to existing references',
+				});
+			}
+
+			// Удаляем только те бренды, которые можно удалить
+			const deletedCount = await brands.destroy({
+				where: {
+					id: deletableBrands.map(brand => brand.id),
+				},
+			});
+
+			res.status(200).json({
+				message: `${deletedCount} brands deleted successfully`,
+			});
 		} catch (error) {
 			res.status(500).json({ message: error.message });
 		}
