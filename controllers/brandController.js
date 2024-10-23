@@ -1,7 +1,7 @@
 import sequelize from '../db.js'; // Импортирую sequelize
 import initModels from '../models/init-models.js'; // Импортирую функцию инициализации
 
-import { Op } from 'sequelize';
+import { Op } from 'sequelize';             // набор операторов для создания условий 
 
 const models = initModels(sequelize); // Инициализирую модели
 const { brands } = models; // Деструктурирую brands из моделей
@@ -51,7 +51,7 @@ class BrandController {
 			const existingBrand = await brands.findOne({
 				where: {
 					name: name,
-					id: { [Op.ne]: id },
+					id: { [Op.ne]: id },           // Op.ne = не равно
 				},
 			});
 
