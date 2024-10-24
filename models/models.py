@@ -26,7 +26,7 @@ sneakers = Table(
 	Column("price", Numeric(10, 2), nullable=False),
 	Column("size", Numeric(3, 1), nullable=False),
 	Column("description", Text),
-	Column("brand_id", Integer, ForeignKey("brands.id", ondelete='CASCADE', onupdate='CASCADE'), nullable=False),
+	Column("brand_id", Integer, ForeignKey("brands.id", ondelete='SET NULL', onupdate='CASCADE'), nullable=False),
 	CheckConstraint('price >= 0', name='check_price_positive_1'),                # Ограничение на цену
     	CheckConstraint('size >= 16', name='check_size_positive'),                    # Ограничение на размер
 )
@@ -45,8 +45,8 @@ orders = Table(
 order_sneakers = Table(
 	"orders_sneakers",
 	metaData,
-	Column("order_id", Integer, ForeignKey("orders.id", ondelete='CASCADE', onupdate='CASCADE'), primary_key=True),           # обеспечивает уникальность каждой комбинации
-	Column("sneaker_id", Integer, ForeignKey("sneakers.id", ondelete='CASCADE', onupdate='CASCADE'), primary_key=True),
+	Column("order_id", Integer, ForeignKey("orders.id", ondelete='RESTRICT', onupdate='CASCADE'), primary_key=True),           # обеспечивает уникальность каждой комбинации
+	Column("sneaker_id", Integer, ForeignKey("sneakers.id", ondelete='RESTRICT', onupdate='CASCADE'), primary_key=True),
 	Column("quantity", Integer, nullable=False, default=1),
 	Column("price", Numeric(10, 2), nullable=False),
 	CheckConstraint('quantity >= 1', name='check_quantity_positive'),     # Ограничение на количество
@@ -71,7 +71,7 @@ payment = Table(
 	metaData,
 	Column("id", Integer, ForeignKey("orders.id", ondelete='CASCADE', onupdate='CASCADE'), primary_key=True),
 	Column("date", TIMESTAMP, server_default=func.now()),
-	Column("provider_id", Integer, ForeignKey("providers.id", ondelete='CASCADE', onupdate='CASCADE'),nullable=False),
+	Column("provider_id", Integer, ForeignKey("providers.id", ondelete='RESTRICT', onupdate='CASCADE'),nullable=False),
 )
 
 
