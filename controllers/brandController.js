@@ -1,5 +1,5 @@
 import sequelize from '../db.js'; // Импортирую sequelize
-import initModels from '../models/init-models.js'; // Импортирую функцию инициализации
+import initModels from '../models/init-models.js'; // Импортирую модели с их связями
 
 import { Op } from 'sequelize'; // набор операторов для создания условий
 
