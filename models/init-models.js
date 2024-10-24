@@ -1,4 +1,4 @@
-import { DataTypes } from 'sequelize';
+import { DataTypes } from 'sequelize';  // обьект содержащий все поддерживаемые типы данных ORM
 import alembic_version from './alembic_version.js';
 import brands from './brands.js';
 import orders from './orders.js';
