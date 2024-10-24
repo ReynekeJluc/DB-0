@@ -73,12 +73,6 @@ class BrandController {
 				}
 			);
 
-			if (updatedRows === 0) {
-				return res.status(404).json({
-					message: "Couldn't find a brand",
-				});
-			}
-
 			res.json({
 				success: true,
 			});
