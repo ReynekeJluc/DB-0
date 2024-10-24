@@ -10,7 +10,9 @@ const { sneakers } = models; // Деструктурирую sneakers из мо�
 class BrandController {
 	async create(req, res) {
 		try {
-			const newBrand = await brands.create(req.body);
+			const { id, ...brandData } = req.body; // исключаем айди
+
+			const newBrand = await brands.create(brandData);
 
 			res.status(200).json(newBrand);
 		} catch (error) {
@@ -143,19 +145,21 @@ class BrandController {
 
 			if (deletableBrands.length === 0) {
 				return res.status(400).json({
-					message: 'No brands can be deleted due to existing references',
+					message: 'No brands can be deleted but all set null',
 				});
 			}
 
 			// Удаляем только те бренды, которые можно удалить
-			const deletedCount = await brands.destroy({
+			await brands.destroy({
 				where: {
-					id: deletableBrands.map(brand => brand.id),
+					id: idsArray,
 				},
 			});
 
 			res.status(200).json({
-				message: `${deletedCount} brands deleted successfully`,
+				message: `${deletableBrands.length} brands deleted successfully and ${
+					idsArray.length - deletableBrands.length
+				} brands set null(or not found)`,
 			});
 		} catch (error) {
 			res.status(500).json({ message: error.message });
