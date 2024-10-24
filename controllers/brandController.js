@@ -94,14 +94,8 @@ class BrandController {
 				return res.status(404).json({ message: 'Brand not found' });
 			}
 
-			res.status(200).send({ message: 'Brand deleted successfully' });
+			res.status(200).send({ message: 'Brand deleted successfully or set null' });
 		} catch (error) {
-			// Обработка ошибок внешнего ключа
-			if (error.name === 'SequelizeForeignKeyConstraintError') {
-				return res.status(400).json({
-					message: 'Cannot delete brand, as it is referenced by sneakers',
-				});
-			}
 			res.status(500).json({ error: error.message });
 		}
 	}
@@ -124,7 +118,7 @@ class BrandController {
 				include: [
 					{
 						model: sneakers,
-						as: 'sneakers', // Указываем алиас (альтернативное название для связей, для избежания конфликтов именования)
+						as: 'sneakers', // Указываем алиас из модели
 						required: false, // Получаем бренды даже если у них нет связанных кроссовок
 					},
 				],
@@ -141,15 +135,15 @@ class BrandController {
 				});
 			}
 
-			// Удаляем только те бренды, которые можно удалить
+			// destroy удаляет что может удалить и ставит в null что не может
 			const deletedCount = await brands.destroy({
 				where: {
-					id: deletableBrands.map(brand => brand.id),
+					id: idsArray,
 				},
 			});
 
 			res.status(200).json({
-				message: `${deletedCount} brands deleted successfully`,
+				message: `${deletableBrands.ids} brands deleted successfully and ${idsArray.length - deletableBrands.ids} brands set null`,
 			});
 		} catch (error) {
 			res.status(500).json({ message: error.message });
