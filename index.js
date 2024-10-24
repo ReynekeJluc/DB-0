@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 5000;
 const app = express();
 app.use(cors({ origin: '*' })); // доступ с любого домена
 app.use(express.json()); // для работы с json
-app.use('/api', router);
+app.use('/api', router);  // создаем подмаршрут
 
 const models = initModels(sequelize);                      // инициализация всех моделей и их привязка к существующим в бд
 const { brands, orders, sneakers, payment } = models;
@@ -32,7 +32,7 @@ const start = async () => {
 		await sequelize.authenticate();           // Проверка можно ли подключиться к бд
 		await sequelize.sync();                   // синхронизация моделей и структур бд
 
-		app.listen(PORT, err => {
+		app.listen(PORT, err => {                 // проверяем (прослушиваем) порт 
 			if (err) {
 				return console.log(err);
 			} else {

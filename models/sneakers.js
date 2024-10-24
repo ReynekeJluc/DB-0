@@ -25,7 +25,7 @@ export default function (sequelize) {
 				type: DataTypes.DECIMAL(3, 1),
 				allowNull: false,
 				validate: {
-					min: 0,
+					min: 16,
 				},
 			},
 			description: {
@@ -39,6 +39,7 @@ export default function (sequelize) {
 					model: 'brands',
 					key: 'id',
 				},
+				onDelete: 'SET NULL'
 			},
 		},
 		{
