@@ -20,7 +20,7 @@ export default function initModels(sequelize) {
 
 	// Явная связь
 	orderModel.belongsToMany(sneakerModel, {
-		as: 'sneaker_id_sneakers',
+		as: 'sneaker_id_sneakers', // алиасы (псевдонимы) для избежания конликта в случае большого количества имен
 		through: orderSneakerModel,
 		foreignKey: 'order_id',
 		otherKey: 'sneaker_id',
