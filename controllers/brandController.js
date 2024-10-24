@@ -131,7 +131,7 @@ class BrandController {
 
 			if (deletableBrands.length === 0) {
 				return res.status(400).json({
-					message: 'No brands can be deleted due to existing references',
+					message: 'No brands can be deleted but all set null',
 				});
 			}
 
