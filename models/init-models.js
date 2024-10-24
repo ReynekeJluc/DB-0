@@ -7,6 +7,8 @@ import payment from './payment.js';
 import providers from './providers.js';
 import sneakers from './sneakers.js';
 
+// Нужен для работы с моделями их импорта, экспорта и определением связей (для правильного создания запросов) 
+
 export default function initModels(sequelize) {
 	const alembic = alembic_version(sequelize, DataTypes);
 	const brandModel = brands(sequelize, DataTypes);
