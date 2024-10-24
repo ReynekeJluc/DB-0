@@ -39,6 +39,7 @@ export default function (sequelize) {
 					model: 'brands',
 					key: 'id',
 				},
+				onDelete: 'SET NULL'
 			},
 		},
 		{
