@@ -16,7 +16,7 @@ class BrandController {
 
 			res.status(200).json(newBrand);
 		} catch (error) {
-			res.status(500).json({ error: error.message });
+			res.status(400).json({ error: error.message });
 		}
 	}
 
@@ -26,7 +26,7 @@ class BrandController {
 
 			res.status(200).json(allBrands);
 		} catch (error) {
-			res.status(500).json({ error: error.message });
+			res.status(400).json({ error: error.message });
 		}
 	}
 
@@ -41,7 +41,7 @@ class BrandController {
 
 			res.status(200).json(brand);
 		} catch (error) {
-			res.status(500).json({ error: error.message });
+			res.status(400).json({ error: error.message });
 		}
 	}
 
@@ -110,7 +110,7 @@ class BrandController {
 					message: 'Cannot delete brand, as it is referenced by sneakers.',
 				});
 			}
-			res.status(500).json({ error: error.message });
+			res.status(400).json({ error: error.message });
 		}
 	}
 
@@ -161,7 +161,27 @@ class BrandController {
 				} brands set null(or not found)`,
 			});
 		} catch (error) {
-			res.status(500).json({ message: error.message });
+			res.status(400).json({ message: error.message });
+		}
+	}
+
+	async find(req, res) {
+		try {
+			const filters = req.query; // получаем атрибуты переданные через строку запроса
+
+			const foundBrands = await brands.findAll({
+				where: filters, // генерит запрос вида    SELECT * FROM brands WHERE name = 'название какое то' AND description = 'какое то опичсание';
+			});
+
+			if (foundBrands.length === 0) {
+				return res
+					.status(404)
+					.json({ message: 'No brands found with attributes' });
+			}
+
+			res.status(200).json(foundBrands);
+		} catch (error) {
+			res.status(400).json({ message: error.message });
 		}
 	}
 }
