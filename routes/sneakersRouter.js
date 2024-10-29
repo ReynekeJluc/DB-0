@@ -1,9 +1,8 @@
 import { Router } from 'express';
+import sneakersController from '../controllers/sneakersController.js';
 
 const router = Router();
 
-router.post('/');
-router.get('/');
-router.get('/:id');
+router.get('/', sneakersController.getAll);
 
 export default router;
