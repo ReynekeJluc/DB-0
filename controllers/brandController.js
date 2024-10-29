@@ -149,7 +149,6 @@ class BrandController {
 				});
 			}
 
-			// Удаляем только те бренды, которые можно удалить
 			await brands.destroy({
 				where: {
 					id: idsArray,
