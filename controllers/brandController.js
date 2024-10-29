@@ -165,6 +165,7 @@ class BrandController {
 		}
 	}
 
+	// -------2-LB-------
 	async find(req, res) {
 		try {
 			const filters = req.query; // получаем атрибуты переданные через строку запроса
@@ -182,6 +183,33 @@ class BrandController {
 			res.status(200).json(foundBrands);
 		} catch (error) {
 			res.status(400).json({ message: error.message });
+		}
+	}
+
+	async manyFind(req, res) {
+		try {
+			const filters = req.query;
+
+			// Получаем параметры лимита и смещения
+			const limitBrands = parseInt(filters.limit) || 5; // Количество результатов (по умолчанию 5)
+			const offsetBrands = parseInt(filters.offset) || 0; // Смещение (по умолчанию 0)
+
+			console.log(limitBrands + ' ' + offsetBrands);
+
+			// удаляем из фильтров лимит и оффсет чтобы он не искал по ним в базе
+			delete filters.limit;
+			delete filters.offset;
+
+			// Выполняем запрос с атрибутами, лимитом и смещением
+			const results = await brands.findAll({
+				where: filters,
+				limit: limitBrands,
+				offset: offsetBrands,
+			});
+
+			res.status(200).json(results);
+		} catch (error) {
+			res.status(400).json({ error: error.message });
 		}
 	}
 }
