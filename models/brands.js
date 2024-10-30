@@ -5,6 +5,10 @@ import initModels from '../models/init-models.js';
 const models = initModels(sequelize); // Инициализирую модели
 const { brands } = models; // Деструктурирую brands из моделей
 
+function capitalize(str) {
+	return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
 export default function (sequelize) {
 	return sequelize.define(
 		'brands',
@@ -20,7 +24,7 @@ export default function (sequelize) {
 				allowNull: false,
 				validate: {
 					isUnique: async (value, next) => {
-						const trimmedValue = value.trim().toLowerCase();
+						const trimmedValue = capitalize(value.trim());
 						const brand = await brands.findOne({
 							where: { name: trimmedValue },
 						});
@@ -32,7 +36,7 @@ export default function (sequelize) {
 				},
 				set(value) {
 					// Убираем пробелы перед сохранением
-					this.setDataValue('name', value.trim());
+					this.setDataValue('name', capitalize(value.trim()));
 				},
 			},
 			description: {
