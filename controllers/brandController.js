@@ -58,7 +58,7 @@ class BrandController {
 				},
 			});
 			
-			if (existingBrand || existingBrand === null) {
+			if (existingBrand) {
 				return res.status(400).json({
 					message: 'A brand with that name already exists or incorrect id',
 				});
