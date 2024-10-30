@@ -40,7 +40,7 @@ export default function (sequelize) {
 				allowNull: true,
 				set(value) {
 					// Убираем пробелы перед сохранением
-					this.setDataValue('name', value.trim());
+					this.setDataValue('description', value.trim());
 				},
 			},
 		},
