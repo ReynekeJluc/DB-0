@@ -29,8 +29,11 @@ export default function (sequelize) {
 						const trimmedValue = value.trim().toLowerCase();
 						const brand = await brands.findOne({
 							where: {
-								where(fn('LOWER', col('name')), Op.eq, trimmedValue),
-								id: { [Op.ne]: this.id }
+								[Op.and]: 
+									[
+										{ fn('LOWER', col('name')), Op.eq, trimmedValue },
+										{ id: { [Op.ne]: this.id } }
+									]
 							}
 						});
 						if (brand) {
