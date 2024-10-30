@@ -28,7 +28,7 @@ export default function (sequelize) {
 			      isUnique: async function(value, next) {
 			        const trimmedValue = value.trim().toLowerCase(); // Преобразуем значение к нижнему регистру
 			
-			        const brand = await Brand.findOne({
+			        const brand = await brands.findOne({
 			          where: {
 			            [Op.and]: [
 			              fn('LOWER', col('name')), // Преобразуем имя в нижний регистр
