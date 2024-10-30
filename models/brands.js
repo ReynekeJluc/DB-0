@@ -38,6 +38,10 @@ export default function (sequelize) {
 			description: {
 				type: DataTypes.TEXT,
 				allowNull: true,
+				set(value) {
+					// Убираем пробелы перед сохранением
+					this.setDataValue('name', value.trim());
+				},
 			},
 		},
 		{
