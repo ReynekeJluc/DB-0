@@ -28,8 +28,7 @@ export default function (sequelize) {
 					isUnique: async (value, next) => {
 						const trimmedValue = value.trim().toLowerCase();
 						const brand = await brands.findOne({
-							where: where(fn('LOWER', col('name')), Op.eq, trimmedValue),
-							id: { [Op.ne]: this.id },
+							where: where(fn('LOWER', col('name')), Op.eq, trimmedValue)
 						});
 						if (brand) {
 							return next('Brand name must be unique');
