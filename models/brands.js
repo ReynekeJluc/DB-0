@@ -25,7 +25,7 @@ export default function (sequelize) {
 				type: DataTypes.STRING(255),
 				allowNull: false,
 				validate: {
-					isUnique: async function (value) {
+					isUnique: async function (value, next) {
 						const trimmedValue = value.trim().toLowerCase();
 						
 						const brand = await brands.findOne({
@@ -37,6 +37,7 @@ export default function (sequelize) {
 						if (brand) {
 							return next('Brand name must be unique');
 						}
+						next();
 					},
 				},
 				set(value) {
