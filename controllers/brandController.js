@@ -12,6 +12,23 @@ class BrandController {
 		try {
 			const { id, ...brandData } = req.body; // исключаем айди
 
+			const lowerCaseName = brandData.name.toLowerCase().trim();
+
+			// Проверяем на существование бренда с таким же именем в нижнем регистре
+			const existingBrand = await brands.findOne({
+				where: sequelize.where(
+					// условие для фильтрации два параметра первое - сравниваемое, второе - с чем сравниваем
+					sequelize.fn('LOWER', sequelize.col('name')), // берем из базы в lower (fn - это функция для выполнения SQL фукнций)
+					lowerCaseName
+				),
+			});
+
+			if (existingBrand) {
+				return res.status(400).json({
+					message: 'A brand with that name already exists',
+				});
+			}
+
 			const newBrand = await brands.create(brandData);
 
 			res.status(200).json(newBrand);
@@ -22,7 +39,7 @@ class BrandController {
 
 	async getAll(req, res) {
 		try {
-			const allBrands = await brands.findAll();
+			const allBrands = await brands.findAll(); // использует SELECT * FROM brands, но можно добавить { attributes: ['name', 'description'] } и тогда конкретные будет брать
 
 			res.status(200).json(allBrands);
 		} catch (error) {
@@ -33,7 +50,7 @@ class BrandController {
 	async getById(req, res) {
 		const { id } = req.params;
 		try {
-			const brand = await brands.findByPk(id); // поиск по первичному ключу фича sequelize
+			const brand = await brands.findByPk(id); // поиск по первичному ключу фича sequelize (также по умолчанию юзает *, но можно аттрибуты вставить)
 
 			if (!brand) {
 				return res.status(404).json({ message: 'Brand not found' });
@@ -49,15 +66,23 @@ class BrandController {
 		try {
 			const { id } = req.params;
 			const { name, description } = req.body;
-			
-			// Проверяю на существование брэнда с таким же названием
+
+			const lowerCaseName = name.toLowerCase().trim();
+
+			// Проверяем на существование бренда с таким же именем в нижнем регистре
 			const existingBrand = await brands.findOne({
 				where: {
-					name: name,
-					id: { [Op.ne]: id }, // Op.ne = не равно, чтобы не считать саму обновляемую запись
+					// оператор обьединения нескольких условий
+					[Op.and]: [
+						sequelize.where(
+							sequelize.fn('LOWER', sequelize.col('name')),
+							lowerCaseName
+						),
+						{ id: { [Op.ne]: id } }, // Исключаем текущую запись из проверки ([Op.ne] - тоже что и <> то есть неравны (not equal))
+					],
 				},
 			});
-			
+
 			if (existingBrand) {
 				return res.status(400).json({
 					message: 'A brand with that name already exists or incorrect id',
@@ -66,12 +91,14 @@ class BrandController {
 
 			// обновляю
 			const [updatedRows] = await brands.update(
+				// почему [updatedRows], потому что update возвращает массив из 2-х элементов, где первый кол-во обновленных и второй собственно обновленные и я сразу деструктурирую забирая то что мне нужно (и то чтобы возвращать массив измененных нужно указать returning: true)
 				{
 					name: name,
 					description: description,
 				},
 				{
 					where: { id },
+					// вот сюда returning: true, если надо будет возвращать массив измененных
 				}
 			);
 
@@ -85,10 +112,8 @@ class BrandController {
 				success: true,
 			});
 		} catch (error) {
-			console.error(error.message);
 			res.status(400).json({
-				error: 'Failed to update the brand',
-				message: error,
+				error: error.message,
 			});
 		}
 	}
@@ -103,7 +128,9 @@ class BrandController {
 				return res.status(404).json({ message: 'Brand not found' });
 			}
 
-			res.status(200).send({ message: 'Brand deleted successfully' });
+			res
+				.status(200)
+				.send({ message: 'Brand deleted successfully (or set null)' });
 		} catch (error) {
 			res.status(400).json({ error: error.message });
 		}
@@ -116,18 +143,21 @@ class BrandController {
 			return res.status(400).json({ message: 'No ids provided' });
 		}
 
-		const idsArray = ids.split(',').map(Number);
+		const idsArray = ids // собственно получаем массив только с валидными значениями id
+			.split(',')
+			.map(id => parseInt(id, 10)) // 10 это система счисления и мы парсим что можем а что не можем нам выдаст NaN который мы след фильтруем
+			.filter(id => !isNaN(id)); // удаляем все не числа из массива
 
 		try {
-			// Сначала находим бренды, которые можно удалить
+			// Генерим массив из брэндов, и у тех кого есть связанные кроссовки добавляем связанную инфу, если нету то просто оставляем
 			const brandsToDelete = await brands.findAll({
 				where: {
-					id: idsArray,
+					id: idsArray, // под капотом запрос типа SELECT * FROM brands AS brands WHERE brands.id IN (idsArray);
 				},
 				include: [
 					{
 						model: sneakers,
-						as: 'sneakers', // Указываем алиас (альтернативное название для связей, для избежания конфликтов именования)
+						as: 'sneakers', // Указываем алиас (альтернативное название для связей, для избежания конфликтов именования) и на его основе формируется название для вложенного обьекта
 						required: false, // Получаем бренды даже если у них нет связанных кроссовок
 						// мы как бы создаем вложенный обьект связанных кроссовок для каждого брэнда
 					},
@@ -141,20 +171,23 @@ class BrandController {
 
 			if (deletableBrands.length === 0) {
 				return res.status(400).json({
-					message: 'No brands can be deleted but all set null',
+					message: 'No brands can be deleted (or you input not valid values)',
 				});
 			}
 
 			await brands.destroy({
+				// он генерирует запрос типа DELETE FROM brands WHERE id IN (idsArray), где idsArray в виде конкретных значений
 				where: {
 					id: idsArray,
 				},
 			});
 
 			res.status(200).json({
-				message: `${deletableBrands.length} brands deleted successfully and ${
+				message: `${
+					deletableBrands.length
+				} brands deleted successfully (or set null) and ${
 					idsArray.length - deletableBrands.length
-				} brands set null(or not found)`,
+				} brands not found or not valid value`,
 			});
 		} catch (error) {
 			res.status(400).json({ message: error.message });
@@ -198,6 +231,8 @@ class BrandController {
 
 			// Выполняем запрос с атрибутами, лимитом и смещением
 			const results = await brands.findAll({
+				// SELECT * FROM brands WHERE name = '...' LIMIT 10 OFFSET 0;
+
 				where: filters,
 				limit: limitBrands,
 				offset: offsetBrands,
@@ -211,3 +246,8 @@ class BrandController {
 }
 
 export default new BrandController();
+
+//! заметки
+// Sequelize не открывает и закрывает соединения он создает ПУЛ СОЕДИНЕНИЙ, набор заранее открыттых соединений можно настраивать в конфиге (db.js):
+// max (сколько всего можно), min (сколько минимум поддерживать будет), acquire (сколько ждать прежде чем ошибку выдавать в миллисекундах), idle (сколько жить будут соединения в миллисекундах)
+// И собственно когда мы кидаем запрос он берет свободный из пула, выполняет и не закрывает его а возвращает обратно в пул

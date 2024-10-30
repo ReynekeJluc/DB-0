@@ -1,4 +1,4 @@
-import { DataTypes, Op, where, fn, col } from 'sequelize';
+import { DataTypes } from 'sequelize';
 import sequelize from '../db.js'; // Импортирую sequelize
 import initModels from '../models/init-models.js';
 
@@ -22,36 +22,12 @@ export default function (sequelize) {
 				primaryKey: true,
 			},
 			name: {
-			    type: DataTypes.STRING(255),
-			    allowNull: false,
-			    validate: {
-			      isUnique: async function(value, next) {
-			        const trimmedValue = value.trim().toLowerCase(); // Преобразуем значение к нижнему регистру
-
-				console.log(this.id);
-				console.log(trimmedValue);
-				      
-			        const brand = await brands.findOne({
-			          where: {
-			            [Op.and]: [
-			              fn('LOWER', col('name')), // Преобразуем имя в нижний регистр
-			              { [Op.eq]: trimmedValue },  // Сравниваем с преобразованным значением
-			              { id: { [Op.ne]: this.id } } // Исключаем текущую запись
-			            ]
-			          }
-			        });
-			
-			        if (brand) {
-			          throw new Error('Brand name must be unique!!!'); // Если бренд найден, выбрасываем ошибку
-			        }
-
-			        next();
-			      }
-			    },
-			    set(value) {
-			      // Убираем пробелы перед сохранением
-			      this.setDataValue('name', value.trim());
-			    },
+				type: DataTypes.STRING(255),
+				allowNull: false,
+				set(value) {
+					// Убираем пробелы перед сохранением
+					this.setDataValue('name', value.trim());
+				},
 			},
 			description: {
 				type: DataTypes.TEXT,

@@ -1,4 +1,4 @@
-import { DataTypes } from 'sequelize';  // обьект содержащий все поддерживаемые типы данных ORM
+import { DataTypes } from 'sequelize'; // обьект содержащий все поддерживаемые типы данных ORM
 import alembic_version from './alembic_version.js';
 import brands from './brands.js';
 import orders from './orders.js';
@@ -7,7 +7,7 @@ import payment from './payment.js';
 import providers from './providers.js';
 import sneakers from './sneakers.js';
 
-// Нужен для работы с моделями их импорта, экспорта и определением связей (для правильного создания запросов) 
+// !Нужен для работы с моделями их импорта, экспорта и определением связей (для правильного создания запросов)
 
 export default function initModels(sequelize) {
 	const alembic = alembic_version(sequelize, DataTypes);
