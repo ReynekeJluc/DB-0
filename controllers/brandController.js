@@ -49,8 +49,6 @@ class BrandController {
 		try {
 			const { id } = req.params;
 			const { name, description } = req.body;
-
-			console.log("begin");
 			
 			// Проверяю на существование брэнда с таким же названием
 			const existingBrand = await brands.findOne({
@@ -59,10 +57,8 @@ class BrandController {
 					id: { [Op.ne]: id }, // Op.ne = не равно, чтобы не считать саму обновляемую запись
 				},
 			});
-
-			console.log(existingBrand);
 			
-			if (existingBrand) {
+			if (existingBrand || existingBrand === null) {
 				return res.status(400).json({
 					message: 'A brand with that name already exists or incorrect id',
 				});
