@@ -65,23 +65,15 @@ class BrandController {
 			}
 
 			// обновляю
-			try {
-				const [updatedRows] = await brands.update(
-					{
-						name: name,
-						description: description,
-					},
-					{
-						where: { id },
-					}
-				);
-			}
-			catch(error) {
-				res.status(400).json({
-					error: 'Failed to update the brand',
-					message: error,
-				});
-			}
+			const [updatedRows] = await brands.update(
+				{
+					name: name,
+					description: description,
+				},
+				{
+					where: { id },
+				}
+			);
 
 			if (updatedRows === 0) {
 				return res.status(404).json({
