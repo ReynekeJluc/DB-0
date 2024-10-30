@@ -27,7 +27,10 @@ export default function (sequelize) {
 			    validate: {
 			      isUnique: async function(value, next) {
 			        const trimmedValue = value.trim().toLowerCase(); // Преобразуем значение к нижнему регистру
-			
+
+				console.log(this.id);
+				console.log(trimmedValue);
+				      
 			        const brand = await brands.findOne({
 			          where: {
 			            [Op.and]: [
@@ -39,7 +42,7 @@ export default function (sequelize) {
 			        });
 			
 			        if (brand) {
-			          throw new Error('Brand name must be unique'); // Если бренд найден, выбрасываем ошибку
+			          throw new Error('Brand name must be unique!!!'); // Если бренд найден, выбрасываем ошибку
 			        }
 
 			        next();
