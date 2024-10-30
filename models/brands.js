@@ -49,7 +49,6 @@ export default function (sequelize) {
 			      // Убираем пробелы перед сохранением
 			      this.setDataValue('name', value.trim());
 			    },
-			  }
 			},
 			description: {
 				type: DataTypes.TEXT,
