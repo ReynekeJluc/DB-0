@@ -41,7 +41,6 @@ export default function (sequelize) {
 			        if (brand) {
 			          throw new Error('Brand name must be unique'); // Если бренд найден, выбрасываем ошибку
 			        }
-			      }
 			    },
 			    set(value) {
 			      // Убираем пробелы перед сохранением
