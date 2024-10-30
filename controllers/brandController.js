@@ -50,6 +50,8 @@ class BrandController {
 			const { id } = req.params;
 			const { name, description } = req.body;
 
+			console.log("begin");
+			
 			// Проверяю на существование брэнда с таким же названием
 			const existingBrand = await brands.findOne({
 				where: {
@@ -90,6 +92,7 @@ class BrandController {
 			console.error(error.message);
 			res.status(400).json({
 				error: 'Failed to update the brand',
+				message: error,
 			});
 		}
 	}
