@@ -1,4 +1,4 @@
-import { DataTypes, Op, where, fn, co } from 'sequelize';
+import { DataTypes, Op, where, fn, col } from 'sequelize';
 import sequelize from '../db.js'; // Импортирую sequelize
 import initModels from '../models/init-models.js';
 
