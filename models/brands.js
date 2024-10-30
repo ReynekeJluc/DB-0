@@ -1,13 +1,15 @@
-import { DataTypes } from 'sequelize';
+import { DataTypes, Op, where, fn, co } from 'sequelize';
 import sequelize from '../db.js'; // Импортирую sequelize
 import initModels from '../models/init-models.js';
 
 const models = initModels(sequelize); // Инициализирую модели
 const { brands } = models; // Деструктурирую brands из моделей
 
+/*
 function capitalize(str) {
 	return str.charAt(0).toUpperCase() + str.slice(1);
 }
+*/
 
 export default function (sequelize) {
 	return sequelize.define(
@@ -24,9 +26,9 @@ export default function (sequelize) {
 				allowNull: false,
 				validate: {
 					isUnique: async (value, next) => {
-						const trimmedValue = capitalize(value.trim());
+						const trimmedValue = value.trim();
 						const brand = await brands.findOne({
-							where: { name: trimmedValue },
+							where: where(fn('LOWER', col('name)), Op.eq, trimmedValue)
 						});
 						if (brand) {
 							return next('Brand name must be unique');
@@ -36,7 +38,7 @@ export default function (sequelize) {
 				},
 				set(value) {
 					// Убираем пробелы перед сохранением
-					this.setDataValue('name', capitalize(value.trim()));
+					this.setDataValue('name', value.trim());
 				},
 			},
 			description: {
