@@ -20,7 +20,7 @@ export default function (sequelize) {
 				allowNull: false,
 				validate: {
 					isUnique: async (value, next) => {
-						const trimmedValue = value.trim();
+						const trimmedValue = value.trim().toLowerCase();
 						const brand = await brands.findOne({
 							where: { name: trimmedValue },
 						});
