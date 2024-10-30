@@ -38,7 +38,7 @@ export default function (sequelize) {
 			          }
 			        });
 			
-			        if (brand && brand.id != this.id) {
+			        if (brand) {
 			          throw new Error('Brand name must be unique'); // Если бренд найден, выбрасываем ошибку
 			        }
 
