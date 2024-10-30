@@ -104,12 +104,6 @@ class BrandController {
 
 			res.status(200).send({ message: 'Brand deleted successfully' });
 		} catch (error) {
-			// Обработка ошибок внешнего ключа
-			if (error.name === 'SequelizeForeignKeyConstraintError') {
-				return res.status(400).json({
-					message: 'Cannot delete brand, as it is referenced by sneakers.',
-				});
-			}
 			res.status(400).json({ error: error.message });
 		}
 	}
