@@ -27,13 +27,11 @@ export default function (sequelize) {
 				validate: {
 					isUnique: async (value, next) => {
 						const trimmedValue = value.trim().toLowerCase();
+						
 						const brand = await brands.findOne({
 							where: {
-								[Op.and]: 
-									[
-										{ fn('LOWER', col('name')), Op.eq, trimmedValue },
-										{ id: { [Op.ne]: this.id } }
-									]
+								name: { [Op.eq]: trimmedValue },
+								{ id: { [Op.ne]: this.id } }
 							}
 						});
 						if (brand) {
