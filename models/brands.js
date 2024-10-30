@@ -31,7 +31,7 @@ export default function (sequelize) {
 						const brand = await brands.findOne({
 							where: {
 								name: { [Op.eq]: trimmedValue },
-								{ id: { [Op.ne]: this.id } }
+								id: { [Op.ne]: this.id }
 							}
 						});
 						if (brand) {
