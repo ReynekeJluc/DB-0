@@ -1,6 +1,6 @@
 """empty message
 
-Revision ID: 7e7c4ca0a70a
+Revision ID: 03c77835a4c3_
 Revises: 87df4c39cb3b
 Create Date: 2024-10-01 18:14:07.806461
 
@@ -15,7 +15,7 @@ from sqlalchemy.dialects.postgresql import ENUM
 order_status_enum = ENUM('Pending', 'Shipped', 'Delivered', 'Canceled',name='orderstatusenum')
 
 # revision identifiers, used by Alembic.
-revision: str = "7e7c4ca0a70a"
+revision: str = "03c77835a4c3_"
 down_revision: Union[str, None] = "87df4c39cb3b"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -117,7 +117,10 @@ def upgrade() -> None:
             {'id': 7, 'provider_id': 2, 'date': "2024-10-01 10:06:00"},
         ]
     )
+
+
     op.execute("SELECT setval('payment_id_seq', (SELECT MAX(id) FROM payment));")  # Обновление последовательности payment
+
 
 def downgrade() -> None:
     op.execute("DELETE FROM payment")

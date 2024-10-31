@@ -1,4 +1,4 @@
-from sqlalchemy import MetaData, Table, Column, Integer, String, Text, TIMESTAMP, func, Numeric, ForeignKey, Enum, JSON, CheckConstraint, UniqueConstraint
+from sqlalchemy import MetaData, Table, Column, Integer, String, Text, TIMESTAMP, func, Numeric, ForeignKey, Enum, JSON, CheckConstraint, Index, UniqueConstraint
 
 metaData = MetaData();
 
@@ -15,7 +15,8 @@ brands = Table(
 	Column("name", String(255), nullable=False),
 	Column("description", Text),
 	CheckConstraint("LENGTH(TRIM(name)) > 0", name="check_brand_name_not_empty"),              # не пусты и не имеют лишние пробельные символы
-	UniqueConstraint("name", name="uq_brand_name")                                             # брэнды уникальны
+	UniqueConstraint("name", name="uq_brand_name"),                                             # брэнды уникальны
+	Index('uq_brand_name_lower', func.lower("name"), unique=True)
 )
 
 sneakers = Table(
