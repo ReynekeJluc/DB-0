@@ -28,7 +28,11 @@ sneakers = Table(
 	Column("description", Text),
 	Column("brand_id", Integer, ForeignKey("brands.id", ondelete='SET NULL', onupdate='CASCADE'), nullable=False),
 	CheckConstraint('price >= 0', name='check_price_positive_1'),                # Ограничение на цену
+<<<<<<< HEAD
     	CheckConstraint('size >= 0', name='check_size_positive'),                    # Ограничение на размер
+=======
+    	CheckConstraint('size >= 16', name='check_size_positive'),                    # Ограничение на размер
+>>>>>>> 898b067b0294fab4a34e1b30584c90597e74fc3d
 )
 
 orders = Table(
@@ -45,11 +49,19 @@ orders = Table(
 order_sneakers = Table(
 	"orders_sneakers",
 	metaData,
+<<<<<<< HEAD
 	Column("order_id", Integer, ForeignKey("orders.id", ondelete='CASCADE', onupdate='CASCADE'), primary_key=True),           # обеспечивает уникальность каждой комбинации
 	Column("sneaker_id", Integer, ForeignKey("sneakers.id", ondelete='CASCADE', onupdate='CASCADE'), primary_key=True),
 	Column("quantity", Integer, nullable=False, default=1),
 	Column("price", Numeric(10, 2), nullable=False),
 	CheckConstraint('quantity >= 0', name='check_quantity_positive'),     # Ограничение на количество
+=======
+	Column("order_id", Integer, ForeignKey("orders.id", ondelete='RESTRICT', onupdate='CASCADE'), primary_key=True),           # обеспечивает уникальность каждой комбинации
+	Column("sneaker_id", Integer, ForeignKey("sneakers.id", ondelete='RESTRICT', onupdate='CASCADE'), primary_key=True),
+	Column("quantity", Integer, nullable=False, default=1),
+	Column("price", Numeric(10, 2), nullable=False),
+	CheckConstraint('quantity >= 1', name='check_quantity_positive'),     # Ограничение на количество
+>>>>>>> 898b067b0294fab4a34e1b30584c90597e74fc3d
 	CheckConstraint('price >= 0', name='check_price_positive_2'),         # Ограничение на цену
 )
 
@@ -71,11 +83,19 @@ payment = Table(
 	metaData,
 	Column("id", Integer, ForeignKey("orders.id", ondelete='CASCADE', onupdate='CASCADE'), primary_key=True),
 	Column("date", TIMESTAMP, server_default=func.now()),
+<<<<<<< HEAD
 	Column("provider_id", Integer, ForeignKey("providers.id", ondelete='CASCADE', onupdate='CASCADE'),nullable=False),
+=======
+	Column("provider_id", Integer, ForeignKey("providers.id", ondelete='RESTRICT', onupdate='CASCADE'),nullable=False),
+>>>>>>> 898b067b0294fab4a34e1b30584c90597e74fc3d
 )
 
 
 
 
 #UniqueConstraint("email", name="uq_provider_email"),
+<<<<<<< HEAD
 #UniqueConstraint("phone", name="uq_provider_phone"),
+=======
+#UniqueConstraint("phone", name="uq_provider_phone"),
+>>>>>>> 898b067b0294fab4a34e1b30584c90597e74fc3d
