@@ -33,7 +33,7 @@ class BrandController {
 		} catch (error) {
 			res.status(400).json({
 				message: error.message,
-				error: error,
+				// error: error,
 			});
 		}
 	}
@@ -115,7 +115,7 @@ class BrandController {
 		} catch (error) {
 			res.status(400).json({
 				message: error.message,
-				error: error,
+				// error: error,
 			});
 		}
 	}
