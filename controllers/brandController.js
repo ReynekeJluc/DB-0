@@ -1,8 +1,6 @@
 import sequelize from '../db.js'; // Импортирую sequelize
 import initModels from '../models/init-models.js'; // Импортирую функцию инициализации
 
-import { Op } from 'sequelize'; // набор операторов для создания условий
-
 const models = initModels(sequelize); // Инициализирую модели
 const { brands } = models; // Деструктурирую brands из моделей
 const { sneakers } = models; // Деструктурирую sneakers из моделей
@@ -12,28 +10,31 @@ class BrandController {
 		try {
 			const { id, ...brandData } = req.body; // исключаем айди
 
-			const lowerCaseName = brandData.name.toLowerCase().trim();
+			//const lowerCaseName = brandData.name.toLowerCase().trim();
 
 			// Проверяем на существование бренда с таким же именем в нижнем регистре
-			const existingBrand = await brands.findOne({
-				where: sequelize.where(
-					// условие для фильтрации два параметра первое - сравниваемое, второе - с чем сравниваем
-					sequelize.fn('LOWER', sequelize.col('name')), // берем из базы в lower (fn - это функция для выполнения SQL фукнций)
-					lowerCaseName
-				),
-			});
+			// const existingBrand = await brands.findOne({
+			// 	where: sequelize.where(
+			// 		// условие для фильтрации два параметра первое - сравниваемое, второе - с чем сравниваем
+			// 		sequelize.fn('LOWER', sequelize.col('name')), // берем из базы в lower (fn - это функция для выполнения SQL фукнций)
+			// 		lowerCaseName
+			// 	),
+			// });
 
-			if (existingBrand) {
-				return res.status(400).json({
-					message: 'A brand with that name already exists',
-				});
-			}
+			// if (existingBrand) {
+			// 	return res.status(400).json({
+			// 		message: 'A brand with that name already exists',
+			// 	});
+			// }
 
 			const newBrand = await brands.create(brandData);
 
 			res.status(200).json(newBrand);
 		} catch (error) {
-			res.status(400).json({ error: error.message });
+			res.status(400).json({
+				message: error.message,
+				error: error,
+			});
 		}
 	}
 
@@ -67,27 +68,27 @@ class BrandController {
 			const { id } = req.params;
 			const { name, description } = req.body;
 
-			const lowerCaseName = name.toLowerCase().trim();
+			//const lowerCaseName = name.toLowerCase().trim();
 
 			// Проверяем на существование бренда с таким же именем в нижнем регистре
-			const existingBrand = await brands.findOne({
-				where: {
-					// оператор обьединения нескольких условий
-					[Op.and]: [
-						sequelize.where(
-							sequelize.fn('LOWER', sequelize.col('name')),
-							lowerCaseName
-						),
-						{ id: { [Op.ne]: id } }, // Исключаем текущую запись из проверки ([Op.ne] - тоже что и <> то есть неравны (not equal))
-					],
-				},
-			});
+			// const existingBrand = await brands.findOne({
+			// 	where: {
+			// 		// оператор обьединения нескольких условий
+			// 		[Op.and]: [
+			// 			sequelize.where(
+			// 				sequelize.fn('LOWER', sequelize.col('name')),
+			// 				lowerCaseName
+			// 			),
+			// 			{ id: { [Op.ne]: id } }, // Исключаем текущую запись из проверки ([Op.ne] - тоже что и <> то есть неравны (not equal))
+			// 		],
+			// 	},
+			// });
 
-			if (existingBrand) {
-				return res.status(400).json({
-					message: 'A brand with that name already exists or incorrect id',
-				});
-			}
+			// if (existingBrand) {
+			// 	return res.status(400).json({
+			// 		message: 'A brand with that name already exists or incorrect id',
+			// 	});
+			// }
 
 			// обновляю
 			const [updatedRows] = await brands.update(
@@ -113,7 +114,8 @@ class BrandController {
 			});
 		} catch (error) {
 			res.status(400).json({
-				error: error.message,
+				message: error.message,
+				error: error,
 			});
 		}
 	}
@@ -143,6 +145,8 @@ class BrandController {
 			return res.status(400).json({ message: 'No ids provided' });
 		}
 
+		const idsLength = ids.split(',');
+
 		const idsArray = ids // собственно получаем массив только с валидными значениями id
 			.split(',')
 			.map(id => parseInt(id, 10)) // 10 это система счисления и мы парсим что можем а что не можем нам выдаст NaN который мы след фильтруем
@@ -164,17 +168,6 @@ class BrandController {
 				],
 			});
 
-			// Фильтруем только те бренды, у которых нет связанных кроссовок
-			const deletableBrands = brandsToDelete.filter(
-				brand => !brand.sneakers.length // brand.sneakers.length содержит количество связанных кроссовок
-			);
-
-			if (deletableBrands.length === 0) {
-				return res.status(400).json({
-					message: 'No brands can be deleted (or you input not valid values)',
-				});
-			}
-
 			await brands.destroy({
 				// он генерирует запрос типа DELETE FROM brands WHERE id IN (idsArray), где idsArray в виде конкретных значений
 				where: {
@@ -184,9 +177,9 @@ class BrandController {
 
 			res.status(200).json({
 				message: `${
-					deletableBrands.length
+					brandsToDelete.length
 				} brands deleted successfully (or set null) and ${
-					idsArray.length - deletableBrands.length
+					idsLength.length - brandsToDelete.length
 				} brands not found or not valid value`,
 			});
 		} catch (error) {
