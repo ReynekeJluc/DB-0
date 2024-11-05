@@ -212,9 +212,12 @@ class BrandController {
 		try {
 			const filters = req.query;
 
-			// Получаем параметры лимита и смещения
-			const limitBrands = parseInt(filters.limit) || 5; // Количество результатов (по умолчанию 5)
-			const offsetBrands = parseInt(filters.offset) || 0; // Смещение (по умолчанию 0)
+			const defaultLimit = 5;
+			const defaultOffset = 0;
+
+			// Получаем параметры лимита и смещения (в случае плохого ввода nan интерпретируем как ложь и берем значение по умолчанию)
+			const limitBrands = parseInt(filters.limit) || defaultLimit; // Количество результатов (по умолчанию 5)
+			const offsetBrands = parseInt(filters.offset) || defaultOffset; // Смещение (по умолчанию 0)
 
 			console.log(limitBrands + ' ' + offsetBrands);
 
