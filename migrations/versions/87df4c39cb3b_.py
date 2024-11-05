@@ -35,8 +35,10 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
         sa.CheckConstraint("LENGTH(TRIM(name)) > 0", name="check_brand_name_not_empty"),
         sa.UniqueConstraint("name", name="uq_brand_name"),
+        
     )
 
+<<<<<<< HEAD
     # # Триггер — это специальный объект базы данных, который автоматически выполняет определенный набор действий в ответ на определенные события
     # op.execute("""
     #     CREATE OR REPLACE FUNCTION check_unique_brand_name()   -- создание новой функции или перезапись такой же (что делать когда триггер сработал)
@@ -54,6 +56,30 @@ def upgrade() -> None:
     #     $$ LANGUAGE plpgsql;           -- процедурный язык PostgreSQL (нужный для написания триггеров, есть условия, отправка эксепшенов, циклы и тд.)
     # """)
 
+=======
+    # !!!!!!!!
+    op.create_index(
+        'uq_brand_name_lower', 'brands', [sa.func.lower('name')], unique=True 
+    )
+
+    # Триггер — это специальный объект базы данных, который автоматически выполняет определенный набор действий в ответ на определенные события (хранятся в сист каталогах базы (pg_trigger))
+    # op.execute("""
+    #     CREATE OR REPLACE FUNCTION check_unique_brand_name()   -- создание новой функции или перезапись такой же
+    #     RETURNS TRIGGER AS $$                                  -- возвращение триггерного значения (она не будет что-то менять, но говорит что продолжит с вводимым значением) $$ - начало и конец текста функции
+    #     BEGIN
+    #         IF EXISTS (                                        -- собственно делаем проверку совпадения имени без учета регистра
+    #             SELECT 1                          -- В контексте триггеров NEW представляет собой новую строку, которую пытаются вставить или обновить
+    #             FROM brands                        -- мы просто хотим узнать есть ли хотябы 1 запись попадающая под наше условие
+    #             WHERE LOWER(name) = LOWER(NEW.name) AND id != NEW.id
+    #         ) THEN
+    #             RAISE EXCEPTION 'Brand name "%s" already exists', NEW.name;     -- вызываем эксепшен   %s - спец символ вставки переменной
+    #         END IF;
+    #         RETURN NEW;                                        -- возвращаем нашу строку для продолжения работы
+    #     END;
+    #     $$ LANGUAGE plpgsql;           -- процедурный язык PostgreSQL (нужный для написания триггеров, есть условия, отправка эксепшенов, циклы и тд.)
+    # """)
+
+>>>>>>> 296607f909e54d345b305b7f2b5c6a06ba8d2f00
     # # Создание триггера
     # op.execute("""
     #     CREATE TRIGGER unique_brand_name_trigger  --собственно создаем триггер срабатывающий перед вставкой или обновлением и выполняющая функцию выше
@@ -178,6 +204,10 @@ def downgrade() -> None:
     op.drop_table("brands")
 
     op.execute("DROP TYPE IF EXISTS orderstatusenum CASCADE")
+<<<<<<< HEAD
 
     op.execute("DROP EXTENSION IF EXISTS citext")
     # ### end Alembic commands ###
+=======
+    # ### end Alembic commands ###
+>>>>>>> 296607f909e54d345b305b7f2b5c6a06ba8d2f00
