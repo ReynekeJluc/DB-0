@@ -225,9 +225,9 @@ class BrandController {
 			delete filters.limit;
 			delete filters.offset;
 
-			filters.forEach((key) => {
-				if (typeof key === 'string') {
-					key = key.trim();
+			Object.keys(filters).forEach((key) => {
+				if (typeof filters[key] === 'string') {
+					filters[key] = filters[key].trim();
 				}
 			})
 			
