@@ -227,8 +227,7 @@ class BrandController {
 
 			// Выполняем запрос с атрибутами, лимитом и смещением
 			const results = await brands.findAll({
-				// SELECT * FROM brands WHERE name = '...' LIMIT 10 OFFSET 0;
-
+				// SELECT * FROM brands WHERE name = '...' LIMIT <...> OFFSET <...>;
 				where: filters,
 				limit: limitBrands,
 				offset: offsetBrands,
