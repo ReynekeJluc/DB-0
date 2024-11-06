@@ -228,6 +228,9 @@ class BrandController {
 			Object.keys(filters).forEach((key) => {
 				if (typeof filters[key] === 'string') {
 					filters[key] = filters[key].trim();
+					if (filters[key] === ' ') {
+						delete filters[key];
+					}
 				}
 			})
 			
