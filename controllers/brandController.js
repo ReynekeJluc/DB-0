@@ -218,8 +218,8 @@ class BrandController {
 			const defaultOffset = 0;
 
 			// Получаем параметры лимита и смещения (в случае плохого ввода nan интерпретируем как ложь и берем значение по умолчанию)
-			const limitBrands = Number.isInteger(filters.limit) ? parseInt(filters.limit) : defaultLimit; // Количество результатов (по умолчанию 5)
-			const offsetBrands = Number.isInteger(filters.offset) ? parseInt(filters.offset) : defaultOffset; // Смещение (по умолчанию 0)
+			const limitBrands = /^[0-9]+$/.test(filters.limit) ? parseInt(filters.limit) : defaultLimit; // Количество результатов (по умолчанию 5)
+			const offsetBrands = /^[0-9]+$/.test(filters.offset) ? parseInt(filters.offset) : defaultOffset; // Смещение (по умолчанию 0)
 
 			console.log(limitBrands + ' ' + offsetBrands);
 
