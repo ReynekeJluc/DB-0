@@ -1,6 +1,8 @@
 import sequelize from '../db.js'; // Импортирую sequelize
 import initModels from '../models/init-models.js'; // Импортирую функцию инициализации
 
+import { Op } from 'sequelize';
+
 const models = initModels(sequelize); // Инициализирую модели
 const { brands } = models; // Деструктурирую brands из моделей
 const { sneakers } = models; // Деструктурирую sneakers из моделей
