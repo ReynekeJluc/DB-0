@@ -224,11 +224,16 @@ class BrandController {
 			// удаляем из фильтров лимит и оффсет чтобы он не искал по ним в базе
 			delete filters.limit;
 			delete filters.offset;
-		
+
+			const updateFilters = {}
+			for (const key in filters) {
+				updateFilters[key] = { [Op.iLike]: `%${filters[key]}%` };
+			}
+			
 			// Выполняем запрос с атрибутами, лимитом и смещением
 			const results = await brands.findAll({
 				// SELECT * FROM brands WHERE name = '...' LIMIT <...> OFFSET <...>;
-				where: filters,
+				where: updateFilters,
 				limit: limitBrands,
 				offset: offsetBrands,
 			});
