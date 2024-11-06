@@ -190,25 +190,25 @@ class BrandController {
 	}
 
 	// -------2-LB-------
-	async find(req, res) {
-	 	try {
-	 		const filters = req.query; // получаем атрибуты переданные через строку запроса
+	// async find(req, res) {
+	// 	try {
+	// 		const filters = req.query; // получаем атрибуты переданные через строку запроса
 
-	 		const foundBrands = await brands.findAll({
-	 			where: filters, // генерит запрос вида    SELECT * FROM brands WHERE name = 'название какое то' AND description = 'какое то опичсание';
-	 		});
+	// 		const foundBrands = await brands.findAll({
+	// 			where: filters, // генерит запрос вида    SELECT * FROM brands WHERE name = 'название какое то' AND description = 'какое то опичсание';
+	// 		});
 
-	 		if (foundBrands.length === 0) {
-	 			return res
-	 				.status(404)
-	 				.json({ message: 'No brands found with attributes' });
-	 		}
+	// 		if (foundBrands.length === 0) {
+	// 			return res
+	// 				.status(404)
+	// 				.json({ message: 'No brands found with attributes' });
+	// 		}
 
-	 		res.status(200).json(foundBrands);
-	 	} catch (error) {
-	 		res.status(400).json({ message: error.message });
-	 	}
-	 }
+	// 		res.status(200).json(foundBrands);
+	// 	} catch (error) {
+	// 		res.status(400).json({ message: error.message });
+	// 	}
+	// }
 
 	async manyFind(req, res) {
 		try {
@@ -217,25 +217,30 @@ class BrandController {
 			const defaultLimit = 5;
 			const defaultOffset = 0;
 
-			// Получаем параметры лимита и смещения (в случае плохого ввода nan интерпретируем как ложь и берем значение по умолчанию)
-			const limitBrands = /^[0-9]+$/.test(filters.limit) ? parseInt(filters.limit) : defaultLimit; // Количество результатов (по умолчанию 5)
-			const offsetBrands = /^[0-9]+$/.test(filters.offset) ? parseInt(filters.offset) : defaultOffset; // Смещение (по умолчанию 0)
+			// Делаем проверку что лимит это число иначе берем дефолт, тоже с оффсетом (.test() - встроенный метод для проверки соответствия регулярке)
+			const limitBrands = /^[0-9]+$/.test(filters.limit) // ^[0-9]+$   ^ $ - начало и конец строки  [0-9]+ - хотябы из одной цифры
+				? parseInt(filters.limit)
+				: defaultLimit;
+			const offsetBrands = /^[0-9]+$/.test(filters.offset)
+				? parseInt(filters.offset)
+				: defaultOffset;
 
-			console.log(limitBrands + ' ' + offsetBrands);
+			//console.log(limitBrands + ' ' + offsetBrands);
 
 			// удаляем из фильтров лимит и оффсет чтобы он не искал по ним в базе
 			delete filters.limit;
 			delete filters.offset;
 
-			const updateFilters = {}
+			const updateFilters = {}; // создаем условия для шаблонного поиска
 			for (const key in filters) {
-				updateFilters[key] = { [Op.iLike]: `%${filters[key].trimStart()}%` };
+				// удаляем отступы слева (справа нет из-за того что может быть несколько слов) и приводит все фильтры к виду для шаблонного поиска с обоих концов %, для поиска подстрокой независимо от позиции
+				updateFilters[key] = { [Op.iLike]: `%${filters[key].trimStart()}%` }; // iLike - поиск нечувствительный к регистру, фича postgresql
 			}
-			
+			//? про iLike https://sequelize.org/docs/v7/querying/operators/
+
 			// Выполняем запрос с атрибутами, лимитом и смещением
 			const results = await brands.findAll({
-				// SELECT * FROM brands WHERE name = '...' LIMIT <...> OFFSET <...>;
-				where: updateFilters,
+				where: updateFilters, // он считывает обьект, где ключ это названия полей таблицы, а значение само условие
 				limit: limitBrands,
 				offset: offsetBrands,
 			});
