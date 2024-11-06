@@ -229,7 +229,7 @@ class BrandController {
 
 			const updateFilters = {}
 			for (const key in filters) {
-				updateFilters[key] = { [Op.iLike]: `%${filters[key]}%` };
+				updateFilters[key] = { [Op.iLike]: `%${filters[key].trimStart()}%` };
 			}
 			
 			// Выполняем запрос с атрибутами, лимитом и смещением
