@@ -224,16 +224,7 @@ class BrandController {
 			// удаляем из фильтров лимит и оффсет чтобы он не искал по ним в базе
 			delete filters.limit;
 			delete filters.offset;
-
-			Object.keys(filters).forEach((key) => {
-				if (typeof filters[key] === 'string') {
-					filters[key] = filters[key].trim();
-					if (filters[key] === ' ') {
-						delete filters[key];
-					}
-				}
-			})
-			
+		
 			// Выполняем запрос с атрибутами, лимитом и смещением
 			const results = await brands.findAll({
 				// SELECT * FROM brands WHERE name = '...' LIMIT <...> OFFSET <...>;
