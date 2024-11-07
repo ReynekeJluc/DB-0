@@ -237,7 +237,10 @@ class BrandController {
 				updateFilters[key] = { [Op.iLike]: `%${filters[key].replace(/\s+/g, ' ')}%` }; // iLike - поиск нечувствительный к регистру, фича postgresql
 			}
 			//? про iLike https://sequelize.org/docs/v7/querying/operators/
+			//? https://postgrespro.ru/docs/postgresql/9.6/functions-matching
 
+			console.log(updateFilters);
+			
 			// Выполняем запрос с атрибутами, лимитом и смещением
 			const results = await brands.findAll({
 				where: updateFilters,
