@@ -217,7 +217,7 @@ class BrandController {
 			const defaultLimit = 5;
 			const defaultOffset = 0;
 
-			// Делаем проверку что лимит это число иначе берем дефолт, тоже с оффсетом (.test() - встроенный метод для проверки соответствия регулярке)
+			// Делаю проверку что лимит это число иначе берем дефолт, тоже с оффсетом (.test() - встроенный метод js для проверки соответствия регулярке)
 			const limitBrands = /^[0-9]+$/.test(filters.limit) // ^[0-9]+$   ^ $ - начало и конец строки  [0-9]+ - хотябы из одной цифры
 				? parseInt(filters.limit)
 				: defaultLimit;
@@ -234,13 +234,13 @@ class BrandController {
 			const updateFilters = {}; // создаем условия для шаблонного поиска
 			for (const key in filters) {
 				// удаляем отступы слева (справа нет из-за того что может быть несколько слов) и приводит все фильтры к виду для шаблонного поиска с обоих концов %, для поиска подстрокой независимо от позиции
-				updateFilters[key] = { [Op.iLike]: `%${filters[key].trimStart()}%` }; // iLike - поиск нечувствительный к регистру, фича postgresql
+				updateFilters[key] = { [Op.iLike]: `%${filters[key]}%` }; // iLike - поиск нечувствительный к регистру, фича postgresql
 			}
 			//? про iLike https://sequelize.org/docs/v7/querying/operators/
 
 			// Выполняем запрос с атрибутами, лимитом и смещением
 			const results = await brands.findAll({
-				where: updateFilters, // он считывает обьект, где ключ это названия полей таблицы, а значение само условие
+				where: updateFilters,
 				limit: limitBrands,
 				offset: offsetBrands,
 			});
