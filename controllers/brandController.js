@@ -230,11 +230,11 @@ class BrandController {
 			// удаляем из фильтров лимит и оффсет чтобы он не искал по ним в базе
 			delete filters.limit;
 			delete filters.offset;
-
+			
 			const updateFilters = {}; // создаем условия для шаблонного поиска
 			for (const key in filters) {
 				// удаляем отступы слева (справа нет из-за того что может быть несколько слов) и приводит все фильтры к виду для шаблонного поиска с обоих концов %, для поиска подстрокой независимо от позиции
-				updateFilters[key] = { [Op.iLike]: `%${filters[key]}%` }; // iLike - поиск нечувствительный к регистру, фича postgresql
+				updateFilters[key] = { [Op.iLike]: `%${filters[key].replace(/\s+/g, ' ')}%` }; // iLike - поиск нечувствительный к регистру, фича postgresql
 			}
 			//? про iLike https://sequelize.org/docs/v7/querying/operators/
 
