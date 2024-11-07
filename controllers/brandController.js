@@ -226,7 +226,8 @@ class BrandController {
 				: defaultOffset;
 
 			//console.log(limitBrands + ' ' + offsetBrands);
-
+			//! parseInt возвращает первое вхождение числа, даже если дальe nan
+			
 			// удаляем из фильтров лимит и оффсет чтобы он не искал по ним в базе
 			delete filters.limit;
 			delete filters.offset;
@@ -235,7 +236,7 @@ class BrandController {
 			for (const key in filters) {
 				// удаляем отступы слева (справа нет из-за того что может быть несколько слов) и приводит все фильтры к виду для шаблонного поиска с обоих концов %, для поиска подстрокой независимо от позиции
 				updateFilters[key] = { [Op.iLike]: `%${filters[key].replace(/\s+/g, ' ')}%` }; // iLike - поиск нечувствительный к регистру, фича postgresql
-			}
+			} // /\s+/g g - глобальный флаг,то есть работает со всеми а не только с первым совпадение 
 			//? про iLike https://sequelize.org/docs/v7/querying/operators/
 			//? https://postgrespro.ru/docs/postgresql/9.6/functions-matching
 
