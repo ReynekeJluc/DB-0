@@ -26,9 +26,9 @@ def upgrade() -> None:
 		sa.Column('name', sa.String(255), nullable = False),
 		sa.Column('parent_id', sa.Integer, sa.ForeignKey('categories.id', ondelete = "CASCADE")),
             
-        sa.PrimaryKeyConstraint('id'),
-        sa.CheckConstraint('LENGTH(TRIM(name)) > 0', name='check_brand_name_not_empty')
-    )
+    sa.PrimaryKeyConstraint('id'),
+    sa.CheckConstraint('LENGTH(TRIM(name)) > 0', name='check_brand_name_not_empty')
+  )
 
 def downgrade() -> None:
     op.drop_table('categories')
