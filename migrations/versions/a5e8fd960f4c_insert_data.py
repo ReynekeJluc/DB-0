@@ -57,4 +57,4 @@ def downgrade() -> None:
     meta = sa.MetaData()  
     categories = sa.Table('categories', meta, autoload_with = op.get_bind())
 		
-    op.execute(categories.delete().where(categories.c.name == 'Обувь'))
+    op.execute(categories.delete().where(categories.c.name == 'Обувь'))   # categories.c.name, c - это контейнер столбцов

@@ -1,6 +1,6 @@
 import pg8000
 
-class ShoeCategoryTree:   # класс методов для работы с деревом
+class CategoryTree:   # класс методов для работы с деревом
     def __init__(self, db_conn):   # конструктор
       self.conn = db_conn
       self.cursor = self.conn.cursor()
@@ -35,7 +35,7 @@ class ShoeCategoryTree:   # класс методов для работы с д�
           category_id = self.cursor.fetchone()[0]
           print(f"\033[32mКатегория {name} добавлена с id = {category_id}\033[0m")
           
-          return category_id
+          #return category_id
         except:
           self.conn.rollback()   # явный откат транзакции после перехвата ошибки
           print(f"\033[31mНеверный ввод имени\033[0m")
@@ -92,19 +92,8 @@ class ShoeCategoryTree:   # класс методов для работы с д�
       row = get_node(self, parent_id)
       
       if row:
-        self.cursor.execute(
-            """
-            WITH RECURSIVE to_delete AS (
-                SELECT id FROM categories WHERE id = %s
-                UNION
-                SELECT c.id FROM categories c
-                INNER JOIN to_delete td ON c.parent_id = td.id
-            )
-            DELETE FROM categories WHERE id IN (SELECT id FROM to_delete)
-            """,
-            (parent_id,)
-        )
-        self.conn.commit()
+        self.cursor.execute("DELETE FROM categories WHERE id = %s", (parent_id,))   # благодаря ограничению можем удалить просто по айди
+        self.conn.commit()     #  фиксирует все изменения в базе, делая их постоянными
         
         print(f"\033[32mПоддерево категории с id = {parent_id} удалено\033[0m")
       else:
@@ -159,7 +148,7 @@ class ShoeCategoryTree:   # класс методов для работы с д�
         else:
           print(f"\033[31mДля категории с id = {category_id[0]} нет родителей\033[0m")
         
-        return rows
+        #return rows
       else:
         print(f"\033[31mНеверные входные данные - id: '{category_id}'\033[0m")
 
@@ -213,7 +202,7 @@ class ShoeCategoryTree:   # класс методов для работы с д�
         else:
           print(f"\033[31mДля категории с id = {parent_id} нет потомков\033[0m")
         
-        return rows
+        #return rows
       else:
         print(f"\033[31mНеверные входные данные - id: '{category_id}'\033[0m")
 
@@ -263,7 +252,7 @@ def main():
     conn = pg8000.connect(database="db_a10c", user="db_a10c_user", password="A0khoNqbLhlUvzuv7hlR3aZAWp0au3s3", host="dpg-csksr2u8ii6s7380n160-a.oregon-postgres.render.com", port="5432")
     # postgresql://db_a10c_user:A0khoNqbLhlUvzuv7hlR3aZAWp0au3s3@dpg-csksr2u8ii6s7380n160-a.oregon-postgres.render.com/db_a10c
     
-    tree = ShoeCategoryTree(conn)
+    tree = CategoryTree(conn)
 
     while True:
       show_menu()
