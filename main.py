@@ -11,8 +11,8 @@ class CategoryTree:   # класс методов для работы с дер�
       row = self.cursor.fetchone()
 			
       if row:
-        category_info = {'name': f"{'_' * level}{row[1]}", 'id': f"\033[32mid: {row[0]}\033[0m", 'parent_id': f"\033[33mparent_id:\033[0m {row[2]}"}
-        print('{name:15} {id:20} {parent_id:20}'.format(**category_info))  # Выводим категорию с нужным отступом
+        category_info = {'name': f"{'___' * level}{row[1]}", 'id': f"\033[32mid: {row[0]}\033[0m", 'parent_id': f"\033[33mparent_id:\033[0m {row[2]}"}
+        print('{name:30} {id:20} {parent_id:20}'.format(**category_info))  # Выводим категорию с нужным отступом
 
 			# Теперь получаем все потомки для текущей категории
       self.cursor.execute("SELECT id, name FROM categories WHERE parent_id = %s", (category_id,))
@@ -150,7 +150,7 @@ class CategoryTree:   # класс методов для работы с дер�
                       'id': f"\033[32mid: {row[0]}\033[0m",
                       'parent_id': f"\033[33mparent_id:\033[0m {row[2]}"
                   }
-                  print('{name:15} {id:20} {parent_id:20}'.format(**category_info))
+                  print('{name:30} {id:20} {parent_id:20}'.format(**category_info))
                   level += 1
           else:
               print(f"\033[31mДля категории с id = {category_id[0]} нет родителей\033[0m")
@@ -214,19 +214,11 @@ class CategoryTree:   # класс методов для работы с дер�
                 'id': f"\033[32mid: {current_id}\033[0m",
                 'parent_id': f"\033[33mparent_id:\033[0m {current['parent_id']}"
             }
-            print('{name:15} {id:20} {parent_id:20}'.format(**category_info))
+            print('{name:30} {id:20} {parent_id:20}'.format(**category_info))
     
             for child_id, child in rows_dict.items():
                 if child['parent_id'] == current_id:
                     self._print_descendants_tree(rows_dict, child_id, level + 1)
-    
-        def _print_descendants_tree(self, rows_dict, current_id, level):
-          current = rows_dict.get(current_id)
-          if current:
-              print(f"{'___' * level}{current['name']} (id: {current_id}, parent_id: {current['parent_id']})")
-              for child_id, child in rows_dict.items():
-                  if child['parent_id'] == current_id:
-                      self._print_descendants_tree(rows_dict, child_id, level + 1)
 
 
 
