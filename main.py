@@ -6,12 +6,20 @@ class CategoryTree:   # класс методов для работы с дер�
       self.cursor = self.conn.cursor()
 
 
-    def print_tree(self, category_path="1", level=0):
+    def print_tree(self, category_path="1", level=0, printed_paths=None):
+      if printed_paths is None:
+          printed_paths = set()  # Множество для отслеживания уже выведенных путей
+  
       # Получаем категорию по path
       self.cursor.execute("SELECT id, name, path FROM categories WHERE path = %s", (category_path,))
       row = self.cursor.fetchone()
-      
+  
       if row:
+          # Проверяем, если путь уже был выведен
+          if row[2] in printed_paths:
+              return
+          printed_paths.add(row[2])
+  
           category_info = {
               'name': f"{'___' * level}{row[1]}",
               'id': f"\033[32mid: {row[0]}\033[0m",
@@ -20,42 +28,68 @@ class CategoryTree:   # класс методов для работы с дер�
           print('{name:30} {id:20} {path:20}'.format(**category_info))  # Вывод категории с нужным отступом
   
           # Получаем дочерние категории (поиск по path с использованием LIKE)
-          self.cursor.execute("SELECT id, name, path FROM categories WHERE path LIKE %s AND path != %s", (f"{category_path}/%", category_path))
+          self.cursor.execute("SELECT id, name, path FROM categories WHERE path LIKE %s AND path != %s", 
+                              (f"{category_path}/%", category_path))
           rows = self.cursor.fetchall()
   
           for row in rows:
-              self.print_tree(row[2], level + 1)
-    
-    
+              self.print_tree(row[2], level + 1, printed_paths)  # Передаем отслеживание путей
+
+
     # Добавление листа
-    def add_leaf(self, name, parent_path="1"):
-        self.cursor.execute("SELECT path FROM categories WHERE path = %s", (parent_path,))
+    def add_leaf(self, name, parent_id=1):
+      row = get_node(self, parent_id)
+      
+      if row:
+        # Получаем путь родительской категории по parent_id
+        self.cursor.execute("SELECT path FROM categories WHERE id = %s", (parent_id,))
         parent = self.cursor.fetchone()
     
         if parent:
+            # Получаем следующий ID для новой категории
+            self.cursor.execute("SELECT nextval('categories_id_seq')")  # Получаем следующий ID
+            new_id = self.cursor.fetchone()[0]
+    
+            # Формируем новый путь с использованием родительского пути и нового ID
+            new_path = f"{parent[0]}/{new_id}"
+            
+            # Вставляем новую категорию с этим путем
             try:
-                new_path = f"{parent_path}/{name}"
                 self.cursor.execute("INSERT INTO categories (name, path) VALUES (%s, %s)", (name, new_path))
                 self.conn.commit()
-                print(f"\033[32mКатегория {name} добавлена с path = {new_path}\033[0m")
-            except:
+    
+                print(f"\033[32mКатегория '{name}' добавлена с path = {new_path}\033[0m")
+            except Exception as e:
                 self.conn.rollback()
-                print(f"\033[31mОшибка при добавлении категории\033[0m")
+                print(f"\033[31mОшибка при добавлении категории: {e}\033[0m")
         else:
-            print(f"\033[31mРодительская категория с path '{parent_path}' не найдена\033[0m")
+            print(f"\033[31mРодительская категория с id '{parent_id}' не найдена\033[0m")
+      else:
+        print(f"\033[31mНеверный ввод родителя\033[0m") 
     
 
     # Удаление листа
-    def delete_leaf(self, category_path):
+    def delete_leaf(self, category_id):
+      row = get_node(self, category_id)
+      
+      if row:
+        category_path = row[2]
+        
+        # Проверяем, есть ли потомки у данной категории по пути
         self.cursor.execute("SELECT COUNT(*) FROM categories WHERE path LIKE %s AND path != %s", (f"{category_path}/%", category_path))
         has_children = self.cursor.fetchone()[0] > 0
-    
-        if not has_children:
-            self.cursor.execute("DELETE FROM categories WHERE path = %s", (category_path,))
-            self.conn.commit()
-            print(f"\033[32mКатегория с path {category_path} удалена\033[0m")
+
+        if has_children:
+            self.delete_non_leaf_node(category_id)
         else:
-            print(f"\033[31mКатегория с path {category_path} имеет потомков и не может быть удалена как лист\033[0m")
+            # Удаляем категорию, если она является листом
+            self.cursor.execute("DELETE FROM categories WHERE id = %s", (category_id,))
+            self.conn.commit()
+            
+            print(f"\033[32mКатегория с id {category_id} удалена\033[0m")
+      else:
+        print(f"\033[31mКатегория с id '{category_id}' не найдена\033[0m")
+
     
 
     # Удаление поддерева
