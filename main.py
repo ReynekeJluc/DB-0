@@ -121,6 +121,7 @@ class CategoryTree:   # класс методов для работы с дер�
                       INNER JOIN ancestors AS a ON c.id = a.parent_id
                   ) 
                   SELECT id, name, parent_id FROM ancestors
+                  ORDER BY name DESC
               """,
               (category_id[0],)
           )
@@ -187,6 +188,7 @@ class CategoryTree:   # класс методов для работы с дер�
                       INNER JOIN descendants AS d ON c.parent_id = d.id
                   ) 
                   SELECT id, name, parent_id FROM descendants
+                  ORDER BY name
               """,
               (category_id[0],)
           )
@@ -273,8 +275,8 @@ def main():
         case "1":
           tree.get_all_descendants(1)
         case "2":
-          name = input("Введите название категории: ")
           parent_id = input("Введите id родительской категории: ")
+          name = input("Введите название категории: ")
           tree.add_leaf(name, parent_id)
         case "3":
           category_id = input("Введите id листа для удаления: ")
