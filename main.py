@@ -6,22 +6,6 @@ class CategoryTree:   # класс методов для работы с дер�
       self.cursor = self.conn.cursor()
 
 
-    def print_tree(self, category_id = 1, level = 0):
-      self.cursor.execute("SELECT id, name, parent_id FROM categories WHERE id = %s", (category_id,))   # Сначала получаем категорию с данным category_id
-      row = self.cursor.fetchone()
-			
-      if row:
-        category_info = {'name': f"{'___' * level}{row[1]}", 'id': f"\033[32mid: {row[0]}\033[0m", 'parent_id': f"\033[33mparent_id:\033[0m {row[2]}"}
-        print('{name:30} {id:20} {parent_id:20}'.format(**category_info))  # Выводим категорию с нужным отступом
-
-			# Теперь получаем все потомки для текущей категории
-      self.cursor.execute("SELECT id, name FROM categories WHERE parent_id = %s", (category_id,))
-      rows = self.cursor.fetchall()
-			
-      for row in rows:
-        self.print_tree(row[0], level + 1)  # Рекурсивно выводим дочерние категории с увеличенным отступом (row[0] - идентификатор дочерней категории)
-
-
 		# Добавление листа
     def add_leaf(self, name, parent_id = None):
       row = get_node(self, parent_id)
@@ -29,7 +13,7 @@ class CategoryTree:   # класс методов для работы с дер�
       if row:
         try:
           self.cursor.execute("INSERT INTO categories (name, parent_id) VALUES (%s, %s) RETURNING id", (name, parent_id))
-          self.conn.commit()
+          self.conn.commit()   # подтверждение изменений в базе
           
           category_id = self.cursor.fetchone()[0]
           print(f"\033[32mКатегория {name} добавлена с id = {category_id}\033[0m")
@@ -105,10 +89,9 @@ class CategoryTree:   # класс методов для работы с дер�
       
       if category_id:
         self.cursor.execute("SELECT id, name FROM categories WHERE id = %s", (category_id[2],))
-        
         parent_id = self.cursor.fetchone()
         
-        print(parent_id)
+        # print(parent_id)
 
         if not parent_id or parent_id[0] == None:
           print(f"\033[33mУ корня нет родителя\033[0m")
@@ -120,30 +103,37 @@ class CategoryTree:   # класс методов для работы с дер�
 
 
     # Получение всех родителей категории
-    def get_all_ancestors(self, category_id, level=0):
+    def get_all_ancestors(self, category_id, level = 0):
       category_id = get_node(self, category_id)
   
       if category_id:
+          # Начальный запрос - получение категории с введенным айди
+          # Рекурсивный - находим для каждой категории ее родительские элементы и добавляем
           self.cursor.execute(
               """
-              WITH RECURSIVE ancestors AS (
-                  SELECT id, name, parent_id 
-                  FROM categories 
-                  WHERE id = %s
-                  UNION
-                  SELECT c.id, c.name, c.parent_id 
-                  FROM categories c 
-                  INNER JOIN ancestors a ON c.id = a.parent_id
-              ) 
-              SELECT id, name, parent_id FROM ancestors
+                  WITH RECURSIVE ancestors AS (
+                      SELECT id, name, parent_id 
+                      FROM categories 
+                      WHERE id = %s
+                      UNION
+                      SELECT c.id, c.name, c.parent_id 
+                      FROM categories AS c 
+                      INNER JOIN ancestors AS a ON c.id = a.parent_id
+                  ) 
+                  SELECT id, name, parent_id FROM ancestors
               """,
               (category_id[0],)
           )
-          rows = list(self.cursor.fetchall())
+          rows = list(self.cursor.fetchall())     # Преобразуем в список явно
   
           if rows:
-              rows.reverse()  # Для корректного порядка: корень вверху
+              
+              # for x in rows:
+              #    print(x)
+
+              rows.reverse()  # Для корректного порядка - корень вверху
               print(f"\033[33mРодители категории с id = {category_id[0]}:\033[0m")
+
               for row in rows:
                   category_info = {
                       'name': f"{'___' * level}{row[1]}",
@@ -151,6 +141,7 @@ class CategoryTree:   # класс методов для работы с дер�
                       'parent_id': f"\033[33mparent_id:\033[0m {row[2]}"
                   }
                   print('{name:30} {id:20} {parent_id:20}'.format(**category_info))
+
                   level += 1
           else:
               print(f"\033[31mДля категории с id = {category_id[0]} нет родителей\033[0m")
@@ -158,6 +149,7 @@ class CategoryTree:   # класс методов для работы с дер�
           print(f"\033[31mНеверные входные данные - id: '{category_id}'\033[0m")
 
     
+    # Получение прямых потомков
     def get_children(self, parent_id):
       category_id = get_node(self, parent_id)
 
@@ -177,37 +169,41 @@ class CategoryTree:   # класс методов для работы с дер�
 
 
     # Получение всех потомков категории
-    def get_all_descendants(self, parent_id, level=0):
+    def get_all_descendants(self, parent_id, level = 0):
       category_id = get_node(self, parent_id)
   
       if category_id:
+          # Начальный запрос - получение категории с введенным айди
+          # Рекурсивный - находим для каждой категории ее дочерние элементы и добавляем
           self.cursor.execute(
               """
-              WITH RECURSIVE descendants AS (
-                  SELECT id, name, parent_id 
-                  FROM categories 
-                  WHERE id = %s
-                  UNION
-                  SELECT c.id, c.name, c.parent_id 
-                  FROM categories c 
-                  INNER JOIN descendants d ON c.parent_id = d.id
-              ) 
-              SELECT id, name, parent_id FROM descendants
+                  WITH RECURSIVE descendants AS (
+                      SELECT id, name, parent_id 
+                      FROM categories 
+                      WHERE id = %s
+                      UNION
+                      SELECT c.id, c.name, c.parent_id 
+                      FROM categories AS c 
+                      INNER JOIN descendants AS d ON c.parent_id = d.id
+                  ) 
+                  SELECT id, name, parent_id FROM descendants
               """,
               (category_id[0],)
           )
-          rows = list(self.cursor.fetchall())  # Преобразуем в список
+          rows = list(self.cursor.fetchall())  # Преобразуем в список явно
   
           if rows:
-              rows_dict = {row[0]: {'name': row[1], 'parent_id': row[2]} for row in rows}
-              self._print_descendants_tree(rows_dict, category_id[0], level)
+              rows_dict = {row[0]: {'name': row[1], 'parent_id': row[2]} for row in rows}   # преобразуем в словарь (для удобного поиска): id - ключ, имя и родитель - значение
+              self._print_descendants_tree(rows_dict, category_id[0], level)   # рекурсивный вывод дерева
           else:
               print(f"\033[31mДля категории с id = {parent_id} нет потомков\033[0m")
       else:
           print(f"\033[31mНеверные входные данные - id: '{parent_id}'\033[0m")
 
+
     def _print_descendants_tree(self, rows_dict, current_id, level):
-        current = rows_dict.get(current_id)
+        current = rows_dict.get(current_id)   # пытамся получить (существует ли запись)
+
         if current:
             category_info = {
                 'name': f"{'___' * level}{current['name']}",
@@ -219,6 +215,7 @@ class CategoryTree:   # класс методов для работы с дер�
             for child_id, child in rows_dict.items():
                 if child['parent_id'] == current_id:
                     self._print_descendants_tree(rows_dict, child_id, level + 1)
+
 
 
 
@@ -274,7 +271,7 @@ def main():
       
       match choice:
         case "1":
-          tree.print_tree()
+          tree.get_all_descendants(1)
         case "2":
           name = input("Введите название категории: ")
           parent_id = input("Введите id родительской категории: ")
