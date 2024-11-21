@@ -189,18 +189,50 @@ class CategoryTree:   # класс методов для работы с дер�
     
 
     # Получение всех потомков
-    def get_all_descendants(self, category_path):
-        self.cursor.execute("SELECT name, path FROM categories WHERE path LIKE %s AND path != %s", (f"{category_path}/%", category_path))
-        rows = self.cursor.fetchall()
-    
-        if rows:
-            print(f"\033[33mВсе потомки категории {category_path}:\033[0m")
-            for row in rows:
-                indent = '___' * (row[1].count('/') - category_path.count('/') - 1)
-                print(f"{indent}\033[32m{row[0]} с path = {row[1]}\033[0m")
-        else:
-            print(f"\033[31mКатегория {category_path} не имеет потомков\033[0m")
-    
+    def get_all_descendants(self, element_id):
+      # Получаем данные текущего элемента
+      self.cursor.execute("SELECT id, name, path FROM categories WHERE id = %s", (element_id,))
+      result = self.cursor.fetchone()
+      
+      if not result:
+          print(f"\033[31mЭлемент с id = {element_id} не найден.\033[0m")
+          return
+  
+      element_id, element_name, element_path = result
+  
+      # Сначала выводим информацию о текущем элементе
+      category_info = {
+          'name': element_name,
+          'id': f"\033[32mid: {element_id}\033[0m",
+          'path': f"\033[33mpath:\033[0m {element_path}"
+      }
+      print('{name:30} {id:20} {path:20}'.format(**category_info))
+  
+      # Получаем всех потомков, чей путь начинается с пути текущего элемента
+      self.cursor.execute("""
+          SELECT id, name, path
+          FROM categories
+          WHERE path LIKE %s AND path != %s
+          ORDER BY path
+      """, (f"{element_path}/%", element_path))
+  
+      descendants = self.cursor.fetchall()
+  
+      if not descendants:
+          print(f"\033[33mЭлемент с id = {element_id} не имеет потомков.\033[0m")
+          return
+  
+      # Выводим потомков с форматированием по уровням
+      for row in descendants:
+          descendant_id, name, path = row
+          level = path.count('/') - element_path.count('/')
+          category_info = {
+              'name': f"{'___' * level}{name}",
+              'id': f"\033[32mid: {descendant_id}\033[0m",
+              'path': f"\033[33mpath:\033[0m {path}"
+          }
+          print('{name:30} {id:20} {path:20}'.format(**category_info))
+      
 
 
 
@@ -244,17 +276,17 @@ def main():
     conn = pg8000.connect(database="db_a10c", user="db_a10c_user", password="A0khoNqbLhlUvzuv7hlR3aZAWp0au3s3", host="dpg-csksr2u8ii6s7380n160-a.oregon-postgres.render.com", port="5432")
           
     tree = CategoryTree(conn)
-
+  
     while True:
       show_menu()
       choice = input("\033[33mВыберите операцию: \033[0m")
       
       match choice:
         case "1":
-          tree.print_tree()
+          tree.get_all_descendants(1)
         case "2":
-          name = input("Введите название категории: ")
           parent_id = input("Введите id родительской категории: ")
+          name = input("Введите название категории: ")
           tree.add_leaf(name, parent_id)
         case "3":
           category_id = input("Введите id листа для удаления: ")
