@@ -158,17 +158,17 @@ class CategoryTree:   # класс методов для работы с дер�
                 self.cursor.execute("SELECT path, name, id FROM categories WHERE path = %s", (parent_path,))
                 parent = self.cursor.fetchone()
                 if parent:
-                    print(f"\033[32mРодитель категории {category_id}: {parent[1]} с path = {parent[0]} и id = {parent[2]}\033[0m")
+                    print(f"\033[32mРодитель категории {row[1]} с id = {parent[1]}\033[0m - \033[33mкатегория с path {parent[0]} и id {parent[2]}: {parent[1]}\033[0m")
                 else:
-                    print("\033[33mРодитель отсутствует (корень дерева)\033[0m")
+                    print("\033[33mУ корня нет родителя\033[0m")
             else:
-                print("\033[33mКорневая категория не имеет родителя\033[0m")
+                print("\033[33mУ корня нет родителя\033[0m")
         else:
             print(f"\033[31mКатегория с id '{category_id}' не найдена\033[0m")
     
 
     # Получение всех родителей
-    def get_all_ancestors(self, category_id):
+    def get_all_ancestors(self, category_id, level = 0):
       row = get_node(self, category_id)
 
       if row:
@@ -185,7 +185,14 @@ class CategoryTree:   # класс методов для работы с дер�
             ancestor = self.cursor.fetchone()
             
             if ancestor:
-                print(f"\033[32m{ancestor[2]} - {ancestor[0]} с path = {ancestor[1]}\033[0m")
+                category_info = {
+                      'name': f"{'___' * level}{ancestor[0]}",
+                      'id': f"\033[32mid: {ancestor[2]}\033[0m",
+                      'path': f"\033[33mpath:\033[0m {ancestor[1]}"
+                }
+                print('{name:30} {id:30} {path:30}'.format(**category_info))
+
+                level += 1
       else:
         print(f"\033[31mНеверные входные данные - id: '{category_id}'\033[0m")
     
@@ -207,7 +214,8 @@ class CategoryTree:   # класс методов для работы с дер�
 
             print(f"\033[33mПрямые потомки категории {rows[1]} id = {category_id}:\033[0m")
             for row in ans:
-              print(f"\033[32m{category_id} - {row[0]} с path = {row[1]}\033[0m")
+              category_info = {'info': f"Категория с path = \033[32m{row[1]}\033[0m", 'name': f"имя: \033[33m{row[0]}\033[0m"}
+              print('{info:30} {name:20}'.format(**category_info))
         else:
           print(f"\033[31mКатегория {category_id} не имеет прямых потомков\033[0m")
     
@@ -331,7 +339,7 @@ def main():
           category_id = input("Введите id категории для удаления: ")
           tree.delete_non_leaf_node(category_id);
         case "0":
-          print("\033[32mВыход из программы\033[0m")
+          print("\033[31mВыход из программы\033[0m")
           break
         case _:
           print("\033[31mЧто-то пошло не так\033[0m")
