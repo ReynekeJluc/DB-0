@@ -6,7 +6,7 @@ class CategoryTree:   # класс методов для работы с дер�
       self.cursor = self.conn.cursor()
 
 
-    def print_tree(self, category_path="1", level=0, printed_paths=None):
+    def print_tree(self, category_path = "1", level = 0, printed_paths = None):
       if printed_paths is None:
           printed_paths = set()  # Множество для отслеживания уже выведенных путей
   
@@ -37,7 +37,7 @@ class CategoryTree:   # класс методов для работы с дер�
 
 
     # Добавление листа
-    def add_leaf(self, name, parent_id=1):
+    def add_leaf(self, name, parent_id = 1):
       row = get_node(self, parent_id)
       
       if row:
@@ -46,22 +46,19 @@ class CategoryTree:   # класс методов для работы с дер�
         parent = self.cursor.fetchone()
     
         if parent:
-            # Получаем следующий ID для новой категории
-            self.cursor.execute("SELECT nextval('categories_id_seq')")  # Получаем следующий ID
-            new_id = self.cursor.fetchone()[0]
-    
-            # Формируем новый путь с использованием родительского пути и нового ID
-            new_path = f"{parent[0]}/{new_id}"
-            
-            # Вставляем новую категорию с этим путем
             try:
-                self.cursor.execute("INSERT INTO categories (name, path) VALUES (%s, %s)", (name, new_path))
-                self.conn.commit()
+                self.cursor.execute("INSERT INTO categories (name, path) VALUES (%s, %s) RETURNING id", (name, parent))
+                new_id = self.cursor.fetchone()[0]
     
+                new_path = f"{parent[0]}/{new_id}"
+
+                self.cursor.execute("UPDATE categories SET path = %s WHERE id = %s", (new_path, new_id))
+                self.conn.commit()
+
                 print(f"\033[32mКатегория '{name}' добавлена с path = {new_path}\033[0m")
             except Exception as e:
                 self.conn.rollback()
-                print(f"\033[31mОшибка при добавлении категории: {e}\033[0m")
+                print(f"\033[31mНеверный ввод имени\033[0m")
         else:
             print(f"\033[31mРодительская категория с id '{parent_id}' не найдена\033[0m")
       else:
@@ -93,16 +90,26 @@ class CategoryTree:   # класс методов для работы с дер�
     
 
     # Удаление поддерева
-    def delete_subtree(self, category_path):
-        self.cursor.execute("DELETE FROM categories WHERE path LIKE %s", (f"{category_path}/%",))
-        self.cursor.execute("DELETE FROM categories WHERE path = %s", (category_path,))
-        self.conn.commit()
-        print(f"\033[32mПоддерево категории с path {category_path} удалено\033[0m")
+    def delete_subtree(self, category_id):
+        row = get_node(self, category_id)
+
+        if row:
+          try:
+            self.cursor.execute("DELETE FROM categories WHERE path LIKE %s", (f"{row[2]}%",))
+            self.conn.commit()
+
+            print(f"\033[32mПоддерево категории с path {row[2]} удалено\033[0m")
+          except Exception as e:
+            self.conn.rollback()
+            print(f"\033[31mОшибка при удалении\033[0m")
+        else:
+          print(f"\033[31mКатегория с id '{category_id}' не найдена\033[0m")
     
 
 		# Удаление узла без поддерева
     def delete_non_leaf_node(self, category_id):
       row = get_node(self, category_id)
+
       if not row:
           print(f"\033[31mКатегория с id '{category_id}' не найдена\033[0m")
           return
@@ -140,102 +147,116 @@ class CategoryTree:   # класс методов для работы с дер�
   
   
     # Получение прямого родителя
-    def get_parent(self, category_path):
-        self.cursor.execute("SELECT path FROM categories WHERE path = %s", (category_path,))
-        row = self.cursor.fetchone()
+    def get_parent(self, category_id):
+        row = get_node(self, category_id);
     
         if row:
+            category_path = row[2]
             parent_path = '/'.join(category_path.split('/')[:-1])
+            
             if parent_path:
-                self.cursor.execute("SELECT path, name FROM categories WHERE path = %s", (parent_path,))
+                self.cursor.execute("SELECT path, name, id FROM categories WHERE path = %s", (parent_path,))
                 parent = self.cursor.fetchone()
                 if parent:
-                    print(f"\033[32mРодитель категории {category_path}: {parent[1]} с path = {parent[0]}\033[0m")
+                    print(f"\033[32mРодитель категории {category_id}: {parent[1]} с path = {parent[0]} и id = {parent[2]}\033[0m")
                 else:
                     print("\033[33mРодитель отсутствует (корень дерева)\033[0m")
             else:
                 print("\033[33mКорневая категория не имеет родителя\033[0m")
         else:
-            print(f"\033[31mКатегория с path '{category_path}' не найдена\033[0m")
+            print(f"\033[31mКатегория с id '{category_id}' не найдена\033[0m")
     
 
     # Получение всех родителей
-    def get_all_ancestors(self, category_path):
-        path_parts = category_path.split('/')
+    def get_all_ancestors(self, category_id):
+      row = get_node(self, category_id)
+
+      if row:
+        path_parts = row[2].split('/')
+
         if len(path_parts) <= 1:
             print("\033[33mКорень не имеет предков\033[0m")
             return
     
         for i in range(1, len(path_parts)):
             ancestor_path = '/'.join(path_parts[:i])
-            self.cursor.execute("SELECT name, path FROM categories WHERE path = %s", (ancestor_path,))
+
+            self.cursor.execute("SELECT name, path, id FROM categories WHERE path = %s", (ancestor_path,))
             ancestor = self.cursor.fetchone()
+            
             if ancestor:
-                print(f"\033[32mПредок: {ancestor[0]} с path = {ancestor[1]}\033[0m")
+                print(f"\033[32m{ancestor[2]} - {ancestor[0]} с path = {ancestor[1]}\033[0m")
+      else:
+        print(f"\033[31mНеверные входные данные - id: '{category_id}'\033[0m")
     
 
     # Получение прямых потомков
-    def get_children(self, category_path):
-        self.cursor.execute("SELECT name, path FROM categories WHERE path LIKE %s AND LENGTH(path) = LENGTH(%s) + LENGTH(name) + 1", 
-                            (f"{category_path}/%", category_path))
-        rows = self.cursor.fetchall()
-    
+    def get_children(self, category_id):
+        rows = get_node(self, category_id)
+
         if rows:
-            print(f"\033[33mПрямые потомки категории {category_path}:\033[0m")
-            for row in rows:
-                print(f"\033[32mПотомок: {row[0]} с path = {row[1]}\033[0m")
+            self.cursor.execute(
+              """
+                SELECT name, path, id
+                FROM categories 
+                WHERE path LIKE %s || '/%' AND LENGTH(path) - LENGTH(REPLACE(path, '/', '')) = LENGTH(%s) - LENGTH(REPLACE(%s, '/', '')) + 1
+              """,
+              (rows[2], rows[2], rows[2])
+            )
+            ans = self.cursor.fetchall()
+
+            print(f"\033[33mПрямые потомки категории {rows[1]} id = {category_id}:\033[0m")
+            for row in ans:
+              print(f"\033[32m{category_id} - {row[0]} с path = {row[1]}\033[0m")
         else:
-            print(f"\033[31mКатегория {category_path} не имеет прямых потомков\033[0m")
+          print(f"\033[31mКатегория {category_id} не имеет прямых потомков\033[0m")
     
 
     # Получение всех потомков
-    def get_all_descendants(self, element_id):
-      # Получаем данные текущего элемента
-      self.cursor.execute("SELECT id, name, path FROM categories WHERE id = %s", (element_id,))
-      result = self.cursor.fetchone()
-      
-      if not result:
-          print(f"\033[31mЭлемент с id = {element_id} не найден.\033[0m")
-          return
+    def get_all_descendants(self, parent_id):
+      result = get_node(self, parent_id)
   
-      element_id, element_name, element_path = result
-  
-      # Сначала выводим информацию о текущем элементе
-      category_info = {
-          'name': element_name,
-          'id': f"\033[32mid: {element_id}\033[0m",
-          'path': f"\033[33mpath:\033[0m {element_path}"
-      }
-      print('{name:30} {id:20} {path:20}'.format(**category_info))
-  
-      # Получаем всех потомков, чей путь начинается с пути текущего элемента
-      self.cursor.execute("""
+      if result:
+        element_id, element_name, element_path = result
+    
+        # Получаем всех потомков, чей путь начинается с пути текущего элемента
+        self.cursor.execute(
+        """
           SELECT id, name, path
           FROM categories
           WHERE path LIKE %s AND path != %s
           ORDER BY path
-      """, (f"{element_path}/%", element_path))
-  
-      descendants = self.cursor.fetchall()
-  
-      if not descendants:
-          print(f"\033[33mЭлемент с id = {element_id} не имеет потомков.\033[0m")
-          return
-  
-      # Выводим потомков с форматированием по уровням
-      for row in descendants:
-          descendant_id, name, path = row
-          level = path.count('/') - element_path.count('/')
-          category_info = {
-              'name': f"{'___' * level}{name}",
-              'id': f"\033[32mid: {descendant_id}\033[0m",
-              'path': f"\033[33mpath:\033[0m {path}"
-          }
-          print('{name:30} {id:20} {path:20}'.format(**category_info))
+        """, 
+        (f"{element_path}/%", element_path))
+        descendants = self.cursor.fetchall()
+    
+        if not descendants:
+            print(f"\033[33mЭлемент с id = {element_id} не имеет потомков.\033[0m")
+            return
+
+        category_info = {
+            'name': element_name,
+            'id': f"\033[32mid: {element_id}\033[0m",
+            'path': f"\033[33mpath:\033[0m {element_path}"
+        }
+        print('{name:30} {id:20} {path:20}'.format(**category_info))
+    
+        # Выводим потомков с форматированием по уровням
+        for row in descendants:
+            descendant_id, name, path = row
+            level = path.count('/') - element_path.count('/')
+            category_info = {
+                'name': f"{'___' * level}{name}",
+                'id': f"\033[32mid: {descendant_id}\033[0m",
+                'path': f"\033[33mpath:\033[0m {path}"
+            }
+            print('{name:30} {id:20} {path:20}'.format(**category_info))
+      else:
+        print(f"\033[31mНеверные входные данные - id: '{parent_id}'\033[0m")
       
 
 
-
+#! Вспомогательные
 def get_node(self, category_id):
     try:
         category_id = int(category_id)
@@ -267,7 +288,7 @@ def main():
     # — добавление листа; +
 		# — удаление листа; +
 		# — удаление поддерева; +
-		# — удаление узла без поддерева; 
+		# — удаление узла без поддерева; +
 		# — получение прямых потомков; +
 		# — получение прямого родителя; +
 		# — получение всех потомков; +
