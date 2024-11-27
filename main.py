@@ -1,64 +1,37 @@
 import pg8000
+import re
 
 class CategoryTree:   # класс методов для работы с деревом
     def __init__(self, db_conn):   # конструктор
       self.conn = db_conn
       self.cursor = self.conn.cursor()
-
-
-    def print_tree(self, category_path = "1", level = 0, printed_paths = None):
-      if printed_paths is None:
-          printed_paths = set()  # Множество для отслеживания уже выведенных путей
-  
-      # Получаем категорию по path
-      self.cursor.execute("SELECT id, name, path FROM categories WHERE path = %s", (category_path,))
-      row = self.cursor.fetchone()
-  
-      if row:
-          # Проверяем, если путь уже был выведен
-          if row[2] in printed_paths:
-              return
-          printed_paths.add(row[2])
-  
-          category_info = {
-              'name': f"{'___' * level}{row[1]}",
-              'id': f"\033[32mid: {row[0]}\033[0m",
-              'path': f"\033[33mpath:\033[0m {row[2]}"
-          }
-          print('{name:30} {id:20} {path:20}'.format(**category_info))  # Вывод категории с нужным отступом
-  
-          # Получаем дочерние категории (поиск по path с использованием LIKE)
-          self.cursor.execute("SELECT id, name, path FROM categories WHERE path LIKE %s AND path != %s", 
-                              (f"{category_path}/%", category_path))
-          rows = self.cursor.fetchall()
-  
-          for row in rows:
-              self.print_tree(row[2], level + 1, printed_paths)  # Передаем отслеживание путей
-
-
+      
     # Добавление листа
     def add_leaf(self, name, parent_id = 1):
       row = get_node(self, parent_id)
       
       if row:
-        # Получаем путь родительской категории по parent_id
         self.cursor.execute("SELECT path FROM categories WHERE id = %s", (parent_id,))
         parent = self.cursor.fetchone()
     
         if parent:
             try:
-                self.cursor.execute("INSERT INTO categories (name, path) VALUES (%s, %s) RETURNING id", (name, parent))
+                # вставляем с путем родителя
+                #print(f"'{re.sub(r'\s+', ' ', name).strip()}'")
+                self.cursor.execute("INSERT INTO categories (name, path) VALUES (%s, %s) RETURNING id", ((re.sub(r'\s+', ' ', name).strip()), 0))
                 new_id = self.cursor.fetchone()[0]
-    
+                
+                # новый путь формируем
                 new_path = f"{parent[0]}/{new_id}"
 
                 self.cursor.execute("UPDATE categories SET path = %s WHERE id = %s", (new_path, new_id))
                 self.conn.commit()
 
-                print(f"\033[32mКатегория '{name}' добавлена с path = {new_path}\033[0m")
+                print(f"\033[32mКатегория '{re.sub(r'\s+', ' ', name).strip()}' добавлена с path = {new_path}\033[0m")
             except Exception as e:
                 self.conn.rollback()
                 print(f"\033[31mНеверный ввод имени\033[0m")
+                #print(e)
         else:
             print(f"\033[31mРодительская категория с id '{parent_id}' не найдена\033[0m")
       else:
@@ -119,7 +92,6 @@ class CategoryTree:   # класс методов для работы с дер�
           print(f"\033[33mКатегория с id = {category_id} является корнем и не может быть удалена\033[0m")
           return
   
-      # Получаем parent_id и текущий path узла
       parent_id = row[2]
       self.cursor.execute("SELECT path FROM categories WHERE id = %s", (category_id,))
       current_path = self.cursor.fetchone()[0]
@@ -132,10 +104,10 @@ class CategoryTree:   # класс методов для работы с дер�
       self.cursor.execute(
           """
           	UPDATE categories
-          	SET parent_id = %s, path = REPLACE(path, %s, %s)
+          	SET path = REPLACE(path, %s, %s)
           	WHERE path LIKE %s
           """,
-          (parent_id, current_path, parent_path, f"{current_path}.%")
+          (current_path, parent_path, f"{current_path}/%")
       )
   
       # Удаляем сам узел
@@ -143,8 +115,7 @@ class CategoryTree:   # класс методов для работы с дер�
       self.conn.commit()
   
       print(f"\033[32mКатегория с id = {category_id} удалена, её потомки переназначены категории с id = {parent_id}\033[0m")
-  
-  
+
   
     # Получение прямого родителя
     def get_parent(self, category_id):
@@ -152,7 +123,7 @@ class CategoryTree:   # класс методов для работы с дер�
     
         if row:
             category_path = row[2]
-            parent_path = '/'.join(category_path.split('/')[:-1])
+            parent_path = '/'.join(category_path.split('/')[:-1])   # сначала разбиваем по /, удаляем последний элемент и объединяем снова по /
             
             if parent_path:
                 self.cursor.execute("SELECT path, name, id FROM categories WHERE path = %s", (parent_path,))
@@ -172,14 +143,14 @@ class CategoryTree:   # класс методов для работы с дер�
       row = get_node(self, category_id)
 
       if row:
-        path_parts = row[2].split('/')
+        path_parts = row[2].split('/')  # все id родителей
 
         if len(path_parts) <= 1:
             print("\033[33mКорень не имеет предков\033[0m")
             return
     
         for i in range(1, len(path_parts)):
-            ancestor_path = '/'.join(path_parts[:i])
+            ancestor_path = '/'.join(path_parts[:i])   # срез по индексу и слияние
 
             self.cursor.execute("SELECT name, path, id FROM categories WHERE path = %s", (ancestor_path,))
             ancestor = self.cursor.fetchone()
@@ -206,8 +177,9 @@ class CategoryTree:   # класс методов для работы с дер�
               """
                 SELECT name, path, id
                 FROM categories 
-                WHERE path LIKE %s || '/%' AND LENGTH(path) - LENGTH(REPLACE(path, '/', '')) = LENGTH(%s) - LENGTH(REPLACE(%s, '/', '')) + 1
+                WHERE path LIKE %s || '/%' AND LENGTH(path) - LENGTH(REPLACE(path, '/', '')) = LENGTH(%s) - LENGTH(REPLACE(%s, '/', '')) + 1 
               """,
+              # получаем количество слэшей и сравниваем
               (rows[2], rows[2], rows[2])
             )
             ans = self.cursor.fetchall()
@@ -233,11 +205,12 @@ class CategoryTree:   # класс методов для работы с дер�
           SELECT id, name, path
           FROM categories
           WHERE path LIKE %s AND path != %s
-          ORDER BY path
+          ORDER BY string_to_array(path, '/')::int[] 
         """, 
+        # преобразовываю путь в массив целых, чтобы сохранялась иерархия, иначе он сортирует лексикографически и ломается структура
         (f"{element_path}/%", element_path))
         descendants = self.cursor.fetchall()
-    
+
         if not descendants:
             print(f"\033[33mЭлемент с id = {element_id} не имеет потомков.\033[0m")
             return
@@ -252,7 +225,7 @@ class CategoryTree:   # класс методов для работы с дер�
         # Выводим потомков с форматированием по уровням
         for row in descendants:
             descendant_id, name, path = row
-            level = path.count('/') - element_path.count('/')
+            level = path.count('/') - element_path.count('/')   # разность между количеством слэшей потомка и родителя
             category_info = {
                 'name': f"{'___' * level}{name}",
                 'id': f"\033[32mid: {descendant_id}\033[0m",
