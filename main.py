@@ -195,46 +195,47 @@ class CategoryTree:   # класс методов для работы с дер�
     # Получение всех потомков
     def get_all_descendants(self, parent_id):
       result = get_node(self, parent_id)
-  
+
       if result:
-        element_id, element_name, element_path = result
-    
-        # Получаем всех потомков, чей путь начинается с пути текущего элемента
-        self.cursor.execute(
-        """
-          SELECT id, name, path
-          FROM categories
-          WHERE path LIKE %s AND path != %s
-          ORDER BY string_to_array(path, '/')::int[] 
-        """, 
-        # преобразовываю путь в массив целых, чтобы сохранялась иерархия, иначе он сортирует лексикографически и ломается структура
-        (f"{element_path}/%", element_path))
-        descendants = self.cursor.fetchall()
+          self.cursor.execute(
+            # Начальный запрос - получение родителя, задавая 0 уровень и ключ по которому сортировка уровней будет
+            # Рекурсивный запрос -  
+          """
+            WITH RECURSIVE tree AS (
+                SELECT id, name, path, 
+                       0 AS level, path AS sort_key
+                FROM categories 
+                WHERE id = %s
+                UNION ALL
+                SELECT c.id, c.name, c.path, t.level + 1, 
+                       t.sort_key || '/' || c.name AS sort_key
+                FROM categories c
+                INNER JOIN tree t ON c.path = t.path || '/' || c.id
+            )
+            SELECT id, name, path, level
+            FROM tree
+            ORDER BY sort_key
+          """, 
+          (parent_id,))
+          descendants = self.cursor.fetchall()
 
-        if not descendants:
-            print(f"\033[33mЭлемент с id = {element_id} не имеет потомков.\033[0m")
-            return
+          if not descendants:
+              print(f"\033[33mЭлемент с id = {result[0]} не имеет потомков.\033[0m")
+              return
 
-        category_info = {
-            'name': element_name,
-            'id': f"\033[32mid: {element_id}\033[0m",
-            'path': f"\033[33mpath:\033[0m {element_path}"
-        }
-        print('{name:30} {id:20} {path:20}'.format(**category_info))
-    
-        # Выводим потомков с форматированием по уровням
-        for row in descendants:
-            descendant_id, name, path = row
-            level = path.count('/') - element_path.count('/')   # разность между количеством слэшей потомка и родителя
-            category_info = {
-                'name': f"{'___' * level}{name}",
-                'id': f"\033[32mid: {descendant_id}\033[0m",
-                'path': f"\033[33mpath:\033[0m {path}"
-            }
-            print('{name:30} {id:20} {path:20}'.format(**category_info))
+          # Выводим всех потомков с форматированием
+          for descendant in descendants:
+              descendant_id, name, path, level = descendant
+              category_info = {
+                  'name': f"{'___' * level}{name}",
+                  'id': f"\033[32mid: {descendant_id}\033[0m",
+                  'path': f"\033[33mpath:\033[0m {path}"
+              }
+              print('{name:30} {id:30} {path:30}'.format(**category_info))
+
       else:
-        print(f"\033[31mНеверные входные данные - id: '{parent_id}'\033[0m")
-      
+          print(f"\033[31mНеверные входные данные - id: '{parent_id}'\033[0m")
+
 
 
 #! Вспомогательные
