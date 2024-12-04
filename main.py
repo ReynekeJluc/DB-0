@@ -199,16 +199,16 @@ class CategoryTree:   # класс методов для работы с дер�
       if result:
           self.cursor.execute(
             # Начальный запрос - получение родителя, задавая 0 уровень и ключ по которому сортировка уровней будет
-            # Рекурсивный запрос -  
+            # Рекурсивный запрос - ищет дочерние категории, чьи path начинаются с path текущего элемента
           """
             WITH RECURSIVE tree AS (
                 SELECT id, name, path, 
                        0 AS level, path AS sort_key
                 FROM categories 
                 WHERE id = %s
-                UNION ALL
-                SELECT c.id, c.name, c.path, t.level + 1, 
-                       t.sort_key || '/' || c.name AS sort_key
+                UNION 
+                SELECT c.id, c.name, c.path, 
+                       t.level + 1, t.sort_key || '/' || c.name AS sort_key
                 FROM categories c
                 INNER JOIN tree t ON c.path = t.path || '/' || c.id
             )
@@ -284,7 +284,7 @@ def main():
       show_menu()
       choice = input("\033[33mВыберите операцию: \033[0m")
       
-      match choice:
+      match choice.strip():
         case "1":
           tree.get_all_descendants(1)
         case "2":
