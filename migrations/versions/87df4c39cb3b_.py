@@ -84,9 +84,9 @@ def upgrade() -> None:
         sa.Column("phone", sa.String(length=10), nullable=False),
         sa.Column("email", sa.String(length=255), nullable=False),
         sa.PrimaryKeyConstraint("id"),
-        sa.CheckConstraint("phone ~ '^[0-9]{10}$'", name="check_phone_format"),
-        sa.CheckConstraint("email ~ '^[^@]+@[^@]+\\.[^@]+$'", name="check_email_format"),
-        sa.CheckConstraint("LENGTH(TRIM(name)) > 0", name="check_providers_name_not_empty"),
+        # sa.CheckConstraint("phone ~ '^[0-9]{10}$'", name="check_phone_format"),
+        # sa.CheckConstraint("email ~ '^[^@]+@[^@]+\\.[^@]+$'", name="check_email_format"),
+        # sa.CheckConstraint("LENGTH(TRIM(name)) > 0", name="check_providers_name_not_empty"),
         sa.UniqueConstraint("name", name="uq_providers_name"),
     )
     op.create_table(
