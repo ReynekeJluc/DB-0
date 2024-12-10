@@ -20,151 +20,132 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Представление на получение данных о платежах с информацией о заказах и связанных провайдерах
-    op.execute(
-    '''
-        CREATE VIEW provider_payment_info AS
-        SELECT 
-            o.id AS order_id,
-            pa.id AS payment_id,
-            o.name_customer,
-            o.order_date::TEXT,
-            pa.date::TEXT,
-            o.status,
-            p.name
-        FROM 
-            payment pa
-        JOIN 
-            orders o ON pa.id = o.id
-        JOIN 
-            providers p ON pa.provider_id = p.id;
-    ''')
-
-    #Триггер для вставки 
+    # Создание представления для брендов и кроссовок
     op.execute(
         '''
-            CREATE OR REPLACE FUNCTION provider_payment_insert()
-            RETURNS TRIGGER AS $$
-            BEGIN
-                INSERT INTO payment(provider_id, date)
-                VALUES (NEW.provider_id, NEW.payment_date)
-                RETURNING id INTO NEW.payment_id;
-
-                RETURN NEW;
-            END;
-            $$ LANGUAGE plpgsql;
-
-            CREATE TRIGGER provider_payment_insert_trigger
-            INSTEAD OF INSERT ON provider_payment_info
-            FOR EACH ROW    
-            EXECUTE FUNCTION provider_payment_insert();
+            CREATE VIEW brand_sneaker_info AS
+            SELECT 
+                b.id AS brand_id,
+                b.name AS brand_name,
+                b.description AS brand_description,
+                s.id AS sneaker_id,
+                s.name AS sneaker_name,
+                s.size AS sneaker_size,
+                s.price AS sneaker_price,
+                s.description AS sneaker_description
+            FROM 
+                brands b
+            JOIN 
+                sneakers s ON b.id = s.brand_id
+            ORDER BY 
+                b.name, s.name;
         '''
     )
 
-    # Триггер для обновления
+
     op.execute(
         '''
-            CREATE OR REPLACE FUNCTION provider_payment_update() 
+            CREATE OR REPLACE FUNCTION insert_into_brands_and_sneakers()
             RETURNS TRIGGER AS $$
             BEGIN
-                UPDATE payment
-                SET provider_id = NEW.provider_id, date = NEW.payment_date
-                WHERE id = NEW.payment_id;
+                -- Вставляем данные в таблицу brands
+                INSERT INTO brands (name, description)
+                VALUES (NEW.brand_name, NEW.brand_description)
+                RETURNING id INTO NEW.brand_id;
+                
+                -- Вставляем данные в таблицу sneakers
+                INSERT INTO sneakers (name, size, price, description, brand_id)
+                VALUES (NEW.sneaker_name, NEW.sneaker_size, NEW.sneaker_price, NEW.sneaker_description, NEW.brand_id)
+                RETURNING id INTO NEW.sneaker_id;
 
                 RETURN NEW;
             END;
             $$ LANGUAGE plpgsql;
 
-            CREATE TRIGGER provider_payment_update_trigger
-            INSTEAD OF UPDATE ON provider_payment_info
+            CREATE TRIGGER insert_into_brands_and_sneakers_trigger
+            INSTEAD OF INSERT ON brand_sneaker_info
             FOR EACH ROW
-            EXECUTE FUNCTION provider_payment_update();
+            EXECUTE FUNCTION insert_into_brands_and_sneakers();
+        '''
+    )  
+
+    op.execute(
+        '''
+            CREATE OR REPLACE FUNCTION update_brands_and_sneakers()
+            RETURNS TRIGGER AS $$
+            BEGIN
+                -- Обновляем данные в таблице brands
+                UPDATE brands
+                SET name = NEW.brand_name, description = NEW.brand_description
+                WHERE id = NEW.brand_id;
+                
+                -- Обновляем данные в таблице sneakers
+                UPDATE sneakers
+                SET name = NEW.sneaker_name, size = NEW.sneaker_size, price = NEW.sneaker_price, description = NEW.sneaker_description
+                WHERE id = NEW.sneaker_id;
+
+                RETURN NEW;
+            END;
+            $$ LANGUAGE plpgsql;
+
+            CREATE TRIGGER update_brands_and_sneakers_trigger
+            INSTEAD OF UPDATE ON brand_sneaker_info
+            FOR EACH ROW
+            EXECUTE FUNCTION update_brands_and_sneakers();
         '''
     )
 
-    # Триггер для удаления
     op.execute(
         '''
-            CREATE OR REPLACE FUNCTION provider_payment_delete() 
+            CREATE OR REPLACE FUNCTION delete_from_brands_and_sneakers()
             RETURNS TRIGGER AS $$
             BEGIN
-                DELETE FROM payment WHERE id = OLD.payment_id;
+                -- Удаляем данные из таблицы sneakers
+                DELETE FROM sneakers WHERE id = OLD.sneaker_id;
+                
+                -- Удаляем данные из таблицы brands
+                DELETE FROM brands WHERE id = OLD.brand_id;
 
                 RETURN OLD;
             END;
             $$ LANGUAGE plpgsql;
 
-            CREATE TRIGGER provider_payment_delete_trigger
-            INSTEAD OF DELETE ON provider_payment_info
+            CREATE TRIGGER delete_from_brands_and_sneakers_trigger
+            INSTEAD OF DELETE ON brand_sneaker_info
             FOR EACH ROW
-            EXECUTE FUNCTION provider_payment_delete();
-        '''
-    )
-
-
-    op.execute(
-        '''
-            CREATE MATERIALIZED VIEW sneakers_sales_stats AS
-            SELECT
-                s.id AS sneaker_id,
-                s.name AS sneaker_name,
-                b.name AS brand_name,
-                SUM(os.quantity * os.price) AS total_sales,  -- Общее количество проданных единиц * цена
-                COUNT(os.order_id) AS total_orders,  -- Общее количество заказов для этой модели
-                RANK() OVER (ORDER BY SUM(os.quantity * os.price) DESC) AS sales_rank  -- Рейтинг по доходу
-            FROM
-                sneakers s
-            JOIN
-                orders_sneakers os ON s.id = os.sneaker_id
-            JOIN
-                orders o ON os.order_id = o.id
-            JOIN
-                brands b ON s.brand_id = b.id
-            GROUP BY
-                s.id, s.name, b.name
-            ORDER BY
-                total_sales DESC;
-        '''
-    )
-
-    op.execute(
-        '''
-            CREATE OR REPLACE FUNCTION refresh_sneakers_sales_stats()
-            RETURNS TRIGGER AS $$
-            BEGIN
-                REFRESH MATERIALIZED VIEW sneakers_sales_stats;
-                RETURN NULL;
-            END;
-            $$ LANGUAGE plpgsql;
-
-            CREATE TRIGGER sneakers_sales_update_trigger
-            AFTER INSERT OR UPDATE OR DELETE ON orders_sneakers
-            FOR EACH STATEMENT
-            EXECUTE FUNCTION refresh_sneakers_sales_stats();
-
-            CREATE TRIGGER sneakers_sales_update_trigger_orders
-            AFTER INSERT OR UPDATE OR DELETE ON orders
-            FOR EACH STATEMENT
-            EXECUTE FUNCTION refresh_sneakers_sales_stats();
-
-            CREATE TRIGGER sneakers_sales_update_trigger_sneakers
-            AFTER INSERT OR UPDATE OR DELETE ON sneakers
-            FOR EACH STATEMENT
-            EXECUTE FUNCTION refresh_sneakers_sales_stats();
+            EXECUTE FUNCTION delete_from_brands_and_sneakers();
         '''
     )
 
 
 def downgrade() -> None:
-    # Удаление триггеров
-    op.execute("DROP TRIGGER IF EXISTS provider_payment_delete_trigger ON provider_payment_info;")
-    op.execute("DROP TRIGGER IF EXISTS provider_payment_update_trigger ON provider_payment_info;")
-    op.execute("DROP TRIGGER IF EXISTS provider_payment_insert_trigger ON provider_payment_info;")
+    # Удаляем триггер для вставки данных в таблицы brands и sneakers
+    op.execute(
+        '''
+            DROP TRIGGER IF EXISTS insert_into_brands_and_sneakers_trigger ON brand_sneaker_info;
+            DROP FUNCTION IF EXISTS insert_into_brands_and_sneakers;
+        '''
+    )
 
-    # Удаление функций для триггеров
-    op.execute("DROP FUNCTION IF EXISTS provider_payment_insert();")
-    op.execute("DROP FUNCTION IF EXISTS provider_payment_update();")
-    op.execute("DROP FUNCTION IF EXISTS provider_payment_delete();")
+    # Удаляем триггер для обновления данных в таблицах brands и sneakers
+    op.execute(
+        '''
+            DROP TRIGGER IF EXISTS update_brands_and_sneakers_trigger ON brand_sneaker_info;
+            DROP FUNCTION IF EXISTS update_brands_and_sneakers;
+        '''
+    )
 
-    # Удаление представления
-    op.execute("DROP VIEW IF EXISTS provider_payment_info;")
+    # Удаляем триггер для удаления данных из таблиц brands и sneakers
+    op.execute(
+        '''
+            DROP TRIGGER IF EXISTS delete_from_brands_and_sneakers_trigger ON brand_sneaker_info;
+            DROP FUNCTION IF EXISTS delete_from_brands_and_sneakers;
+        '''
+    )
+
+    # Удаляем представление brand_sneaker_info
+    op.execute(
+        '''
+            DROP VIEW IF EXISTS brand_sneaker_info;
+        '''
+    )
