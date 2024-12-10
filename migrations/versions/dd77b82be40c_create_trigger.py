@@ -97,4 +97,11 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-	pass
+    op.execute(
+        '''
+            DROP TRIGGER IF EXISTS trg_validate_sneakers_insert ON sneakers;
+            DROP FUNCTION IF EXISTS validate_sneakers_insert;
+            DROP TRIGGER IF EXISTS trg_validate_sneakers_update ON sneakers;
+            DROP FUNCTION IF EXISTS validate_sneakers_update;
+        '''
+    )
