@@ -26,25 +26,30 @@ def upgrade() -> None:
             CREATE OR REPLACE FUNCTION validate_sneakers_insert() 
             RETURNS TRIGGER AS $$
             BEGIN
-                -- Очистка пробелов в поле name и description
                 NEW.name := TRIM(NEW.name);
                 NEW.description := NULLIF(TRIM(NEW.description), '');
 
-                -- Капитализация поля name
-                NEW.name := INITCAP(NEW.name);
+                IF LENGTH(NEW.name) <= 0 THEN
+                    RAISE EXCEPTION 'Название не может состоять из пустой строки или набора пробелов';
+                END IF;
+                    
+                -- Капитализация поля name (нужно ли мне название кроссовка капитализировать?)
+                -- NEW.name := INITCAP(NEW.name);
 
-                -- Проверка и замена пустых строк в description на NULL
                 IF NEW.description = '' THEN
                     NEW.description := NULL;
                 END IF;
 
-                -- Проверка отрицательных значений для price и size
                 IF NEW.price < 0 THEN
                     RAISE EXCEPTION 'Цена не может быть отрицательной';
                 END IF;
 
                 IF NEW.size < 0 THEN
                     RAISE EXCEPTION 'Размер не может быть отрицательным';
+                END IF;
+
+                IF NEW.size < 26 THEN
+                    RAISE EXCEPTION 'Обуви меньше 26 размера в России не продают';
                 END IF;
 
                 RETURN NEW;
@@ -63,25 +68,30 @@ def upgrade() -> None:
             CREATE OR REPLACE FUNCTION validate_sneakers_update() 
             RETURNS TRIGGER AS $$
             BEGIN
-                -- Очистка пробелов в поле name и description
                 NEW.name := TRIM(NEW.name);
                 NEW.description := NULLIF(TRIM(NEW.description), '');
 
+                IF LENGTH(NEW.name) <= 0 THEN
+                    RAISE EXCEPTION 'Название не может состоять из пустой строки или набора пробелов';
+                END IF;
+                
                 -- Капитализация поля name
-                NEW.name := INITCAP(NEW.name);
+                -- NEW.name := INITCAP(NEW.name);
 
-                -- Проверка и замена пустых строк в description на NULL
                 IF NEW.description = '' THEN
                     NEW.description := NULL;
                 END IF;
 
-                -- Проверка отрицательных значений для price и size
                 IF NEW.price < 0 THEN
                     RAISE EXCEPTION 'Цена не может быть отрицательной';
                 END IF;
 
                 IF NEW.size < 0 THEN
                     RAISE EXCEPTION 'Размер не может быть отрицательным';
+                END IF;
+
+                IF NEW.size < 26 THEN
+                    RAISE EXCEPTION 'Обуви меньше 26 размера в России не продают';
                 END IF;
 
                 RETURN NEW;

@@ -127,11 +127,11 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.execute("TRUNCATE payment RESTART IDENTITY")
-    op.execute("TRUNCATE providers RESTART IDENTITY")
-    op.execute("TRUNCATE orders_sneakers RESTART IDENTITY")
-    op.execute("TRUNCATE orders RESTART IDENTITY")
-    op.execute("TRUNCATE sneakers RESTART IDENTITY")
-    op.execute("TRUNCATE brands RESTART IDENTITY")
+    op.execute("TRUNCATE payment RESTART IDENTITY CASCADE")
+    op.execute("TRUNCATE providers RESTART IDENTITY CASCADE")
+    op.execute("TRUNCATE orders_sneakers RESTART IDENTITY CASCADE")
+    op.execute("TRUNCATE orders RESTART IDENTITY CASCADE")
+    op.execute("TRUNCATE sneakers RESTART IDENTITY CASCADE")
+    op.execute("TRUNCATE brands RESTART IDENTITY CASCADE")
 
     op.execute("DROP TYPE IF EXISTS orderstatusenum CASCADE")

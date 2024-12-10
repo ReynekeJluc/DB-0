@@ -116,7 +116,7 @@ def upgrade() -> None:
     op.create_table(
         "sneakers",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
-        sa.Column("name", sa.String(length=255), nullable=False),
+        sa.Column("name", CITEXT(), nullable=False),
         sa.Column("price", sa.Numeric(precision=10, scale=2), nullable=False),
         sa.Column("size", sa.Numeric(precision=3, scale=1), nullable=False),
         sa.Column("description", sa.Text(), nullable=True),
@@ -128,8 +128,10 @@ def upgrade() -> None:
             onupdate='CASCADE'
         ),
         sa.PrimaryKeyConstraint("id"),
-        sa.CheckConstraint('price >= 0', name='check_price_positive_1'),
-        sa.CheckConstraint('size >= 0', name='check_size_positive'),
+        # sa.CheckConstraint('price >= 0', name='check_price_positive_1'),
+        # sa.CheckConstraint('size >= 0', name='check_size_positive'),
+        #sa.CheckConstraint("LENGTH(TRIM(name)) > 0", name='check_name_length'),
+        # sa.CheckConstraint("LENGTH(TRIM(description)) > 0", name='check_description_length')
     )
     op.create_table(
         "orders_sneakers",
