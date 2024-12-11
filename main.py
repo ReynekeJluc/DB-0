@@ -1,4 +1,5 @@
 import pg8000
+import json
 
 class ProceduresCrud:
 		def __init__(self, db_conn):
@@ -13,7 +14,7 @@ class ProceduresCrud:
 						print("Провайдер успешно добавлен")
 				except Exception as e:
 						self.conn.rollback()
-						print(e)
+						print(json.loads(str(e).replace("'", "\""))['M'])
 						
 
 		def get_all_providers(self):
@@ -22,7 +23,7 @@ class ProceduresCrud:
 				max_length = [0] * len(rows[0])
 				
 				for row in rows:
-						for i, value in enumerate(row):
+						for i, value in enumerate(row):   #enumerate встроенная функция python для извлечения и индекса и значения
 								max_length[i] = max(max_length[i], len(str(value)))
 				format_string = " ".join(["{:<" + str(length + 3) + "}" for length in max_length])
 
@@ -44,7 +45,7 @@ class ProceduresCrud:
 								print(f"Провайдер с id = {id} не найден")
 				except Exception as e:
 						self.conn.rollback()
-						print(e)
+						print(json.loads(str(e).replace("'", "\""))['M'])
 						
 						
 		def update_provider(self, id, name, address, phone, email):
@@ -56,7 +57,7 @@ class ProceduresCrud:
 						print("Провайдер успешно обновлен")
 				except Exception as e:
 						self.conn.rollback()
-						print(e)
+						print(json.loads(str(e).replace("'", "\""))['M'])
 						
 
 		def delete_provider(self, id):
@@ -67,7 +68,7 @@ class ProceduresCrud:
 						print("Провайдер успешно удален")
 				except Exception as e:
 						self.conn.rollback()
-						print(e)
+						print(json.loads(str(e).replace("'", "\""))['M'])
 						
 
 		def delete_list_providers(self, ids):
@@ -79,7 +80,7 @@ class ProceduresCrud:
 						print(f"Удалено провайдеров: {deleted_count}")
 				except Exception as e:
 						self.conn.rollback()
-						print(e)
+						print(json.loads(str(e).replace("'", "\""))['M'])
         
 
 
