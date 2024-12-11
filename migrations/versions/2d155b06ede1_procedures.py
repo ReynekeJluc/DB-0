@@ -33,7 +33,7 @@ def upgrade() -> None:
                 name_n := TRIM(REGEXP_REPLACE(name_n, '\s+', ' ', 'g'));
                 address_n := TRIM(REGEXP_REPLACE(address_n, '\s+', ' ', 'g'));
                 phone_n := TRIM(REGEXP_REPLACE(phone_n, '\s+', '', 'g'));
-                email_n := TRIM(REGEXP_REPLACE(email_n, '\s+', '', 'g'));
+                email_n := TRIM(REGEXP_REPLACE(email_n, '\s+', '', 'g'));   
 
                 IF LENGTH(name_n) = 0 THEN
                     RAISE EXCEPTION 'The name cannot be empty';
@@ -120,36 +120,44 @@ def upgrade() -> None:
                         RAISE EXCEPTION 'Provider with id % not found', id_new;
                     END IF;
 
-                    IF name_n IS NOT NULL AND TRIM(name_n) <> '' THEN
-                        UPDATE providers 
-                        SET name = TRIM(REGEXP_REPLACE(name_n, '\s+', ' ', 'g'))
-                        WHERE id = id_new;
-                    ELSE
-                        RAISE EXCEPTION 'The name was entered incorrectly';
+                    IF name_n IS NOT NULL AND name_n <> '' THEN
+                        IF TRIM(name_n) <> '' THEN
+                            UPDATE providers 
+                            SET name = TRIM(REGEXP_REPLACE(name_n, '\s+', ' ', 'g'))
+                            WHERE id = id_new;
+                        ELSE
+                            RAISE EXCEPTION 'The name was entered incorrectly';
+                        END IF;
                     END IF;
 
-                    IF address_n IS NOT NULL AND TRIM(address_n) <> '' THEN
-                        UPDATE providers 
-                        SET address = TRIM(REGEXP_REPLACE(address_n, '\s+', ' ', 'g'))
-                        WHERE id = id_new;
-                    ELSE
-                        RAISE EXCEPTION 'The address was entered incorrectly';
+                    IF address_n IS NOT NULL AND address_n <> '' THEN
+                        IF TRIM(address_n) <> '' THEN
+                            UPDATE providers 
+                            SET address = TRIM(REGEXP_REPLACE(address_n, '\s+', ' ', 'g'))
+                            WHERE id = id_new;
+                        ELSE
+                            RAISE EXCEPTION 'The address was entered incorrectly';
+                        END IF;
                     END IF;
                     
-                    IF phone_n IS NOT NULL AND TRIM(phone_n) <> '' AND phone_n ~ '^[0-9]{10}$' THEN
-                        UPDATE providers 
-                        SET phone = TRIM(REGEXP_REPLACE(phone_n, '\s+', '', 'g'))
-                        WHERE id = id_new;
-                    ELSE
-                        RAISE EXCEPTION 'The phone was entered incorrectly';
+                    IF phone_n IS NOT NULL AND phone_n <> '' THEN
+                        IF TRIM(phone_n) <> '' AND phone_n ~ '^[0-9]{10}$' THEN
+                            UPDATE providers 
+                            SET phone = TRIM(REGEXP_REPLACE(phone_n, '\s+', '', 'g'))
+                            WHERE id = id_new;
+                        ELSE
+                            RAISE EXCEPTION 'The phone was entered incorrectly';
+                        END IF;
                     END IF;
 
-                    IF email_n IS NOT NULL AND TRIM(email_n) <> '' AND email_n ~ '^[^@]+@[^@]+\.[^@]+$' THEN
-                        UPDATE providers 
-                        SET email = TRIM(REGEXP_REPLACE(email_n, '\s+', '', 'g'))
-                        WHERE id = id_new;
-                    ELSE
-                        RAISE EXCEPTION 'The email was entered incorrectly';
+                    IF email_n IS NOT NULL AND email_n <> '' THEN
+                        IF TRIM(email_n) <> '' AND email_n ~ '^[^@]+@[^@]+\.[^@]+$' THEN
+                            UPDATE providers 
+                            SET email = TRIM(REGEXP_REPLACE(email_n, '\s+', '', 'g'))
+                            WHERE id = id_new;
+                        ELSE
+                            RAISE EXCEPTION 'The email was entered incorrectly';
+                        END IF;
                     END IF;
                 END;
             END;
@@ -164,7 +172,7 @@ def upgrade() -> None:
                 DECLARE
                     id_new INT;
                 BEGIN
-                    id_n := NULLIF(TRIM(id_n), '');
+                    id_n := NULLIF(TRIM(id_n), '');   -- возвращает null если оба значения равны
 
                     IF id_n IS NULL OR NOT (id_n ~ '^[0-9]+$') THEN
                         RAISE EXCEPTION 'The provider id must be a positive integer and cannot be empty';
@@ -194,7 +202,7 @@ def upgrade() -> None:
                 BEGIN
                     FOREACH id IN ARRAY ids LOOP
                         IF id IS NULL OR NOT id ~ '^[0-9]+$' THEN
-                            RAISE NOTICE 'The provider id must be a positive integer and cannot be empty';
+                            RAISE NOTICE 'The provider id must be a positive integer and cannot be empty';   -- уведы
                             CONTINUE; 
                         END IF;
 
