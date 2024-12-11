@@ -20,132 +20,121 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Создание представления для брендов и кроссовок
     op.execute(
         '''
-            CREATE VIEW brand_sneaker_info AS
-            SELECT 
-                b.id AS brand_id,
-                b.name AS brand_name,
-                b.description AS brand_description,
+            CREATE VIEW sneakers_orders_view AS
+            SELECT
                 s.id AS sneaker_id,
                 s.name AS sneaker_name,
-                s.size AS sneaker_size,
                 s.price AS sneaker_price,
-                s.description AS sneaker_description
-            FROM 
-                brands b
-            JOIN 
-                sneakers s ON b.id = s.brand_id
-            ORDER BY 
-                b.name, s.name;
+                s.size AS sneaker_size,
+                s.description AS sneaker_description,
+                os.order_id AS order_id,
+                os.quantity AS order_quantity,
+                os.price AS order_price
+            FROM sneakers s
+            LEFT JOIN orders_sneakers os ON s.id = os.sneaker_id
         '''
     )
 
 
     op.execute(
         '''
-            CREATE OR REPLACE FUNCTION insert_into_brands_and_sneakers()
-            RETURNS TRIGGER AS $$
+            CREATE OR REPLACE FUNCTION insert_into_sneakers_orders_view()
+            RETURNS TRIGGER AS $$ 
             BEGIN
-                -- Вставляем данные в таблицу brands
-                INSERT INTO brands (name, description)
-                VALUES (NEW.brand_name, NEW.brand_description)
-                RETURNING id INTO NEW.brand_id;
-                
-                -- Вставляем данные в таблицу sneakers
-                INSERT INTO sneakers (name, size, price, description, brand_id)
-                VALUES (NEW.sneaker_name, NEW.sneaker_size, NEW.sneaker_price, NEW.sneaker_description, NEW.brand_id)
-                RETURNING id INTO NEW.sneaker_id;
+                INSERT INTO sneakers (id, name, price, size, description)
+                VALUES (NEW.sneaker_id, NEW.sneaker_name, NEW.sneaker_price, NEW.sneaker_size, NEW.sneaker_description);
+
+                INSERT INTO orders_sneakers (sneaker_id, order_id, quantity, price)
+                VALUES (NEW.sneaker_id, NEW.order_id, NEW.order_quantity, NEW.order_price);
 
                 RETURN NEW;
             END;
             $$ LANGUAGE plpgsql;
 
-            CREATE TRIGGER insert_into_brands_and_sneakers_trigger
-            INSTEAD OF INSERT ON brand_sneaker_info
+            CREATE TRIGGER insert_into_sneakers_orders_view_trigger
+            INSTEAD OF INSERT ON sneakers_orders_view
             FOR EACH ROW
-            EXECUTE FUNCTION insert_into_brands_and_sneakers();
+            EXECUTE FUNCTION insert_into_sneakers_orders_view();
         '''
-    )  
+    )
+
 
     op.execute(
         '''
-            CREATE OR REPLACE FUNCTION update_brands_and_sneakers()
-            RETURNS TRIGGER AS $$
+            CREATE OR REPLACE FUNCTION update_sneakers_orders_view()
+            RETURNS TRIGGER AS $$ 
             BEGIN
-                -- Обновляем данные в таблице brands
-                UPDATE brands
-                SET name = NEW.brand_name, description = NEW.brand_description
-                WHERE id = NEW.brand_id;
-                
-                -- Обновляем данные в таблице sneakers
                 UPDATE sneakers
-                SET name = NEW.sneaker_name, size = NEW.sneaker_size, price = NEW.sneaker_price, description = NEW.sneaker_description
+                SET name = NEW.sneaker_name, 
+                    price = NEW.sneaker_price, 
+                    size = NEW.sneaker_size, 
+                    description = NEW.sneaker_description
                 WHERE id = NEW.sneaker_id;
 
+                UPDATE orders_sneakers
+                SET quantity = NEW.order_quantity, 
+                    price = NEW.order_price
+                WHERE sneaker_id = NEW.sneaker_id;
+
                 RETURN NEW;
             END;
             $$ LANGUAGE plpgsql;
 
-            CREATE TRIGGER update_brands_and_sneakers_trigger
-            INSTEAD OF UPDATE ON brand_sneaker_info
+            CREATE TRIGGER update_sneakers_orders_view_trigger
+            INSTEAD OF UPDATE ON sneakers_orders_view
             FOR EACH ROW
-            EXECUTE FUNCTION update_brands_and_sneakers();
+            EXECUTE FUNCTION update_sneakers_orders_view();
         '''
     )
 
+
     op.execute(
         '''
-            CREATE OR REPLACE FUNCTION delete_from_brands_and_sneakers()
-            RETURNS TRIGGER AS $$
+            CREATE OR REPLACE FUNCTION delete_from_sneakers_orders_view()
+            RETURNS TRIGGER AS $$ 
             BEGIN
-                -- Удаляем данные из таблицы sneakers
                 DELETE FROM sneakers WHERE id = OLD.sneaker_id;
-                
-                -- Удаляем данные из таблицы brands
-                DELETE FROM brands WHERE id = OLD.brand_id;
+                DELETE FROM orders_sneakers WHERE sneaker_id = OLD.sneaker_id;
 
                 RETURN OLD;
             END;
             $$ LANGUAGE plpgsql;
 
-            CREATE TRIGGER delete_from_brands_and_sneakers_trigger
-            INSTEAD OF DELETE ON brand_sneaker_info
+            CREATE TRIGGER delete_from_sneakers_orders_view_trigger
+            INSTEAD OF DELETE ON sneakers_orders_view
             FOR EACH ROW
-            EXECUTE FUNCTION delete_from_brands_and_sneakers();
+            EXECUTE FUNCTION delete_from_sneakers_orders_view();
         '''
     )
+
+
+
+
+
+
+
+
+    op.execute(
+        '''
+            CREATE MATERIALIZED VIEW brand_sneaker_count AS
+            SELECT
+                b.id AS brand_id,
+                b.name AS brand_name,
+                COUNT(s.id) AS sneaker_count
+            FROM brands b
+            JOIN sneakers s ON b.id = s.brand_id
+            GROUP BY b.id, b.name;
+        '''
+    )
+
 
 
 def downgrade() -> None:
-    # Удаляем триггер для вставки данных в таблицы brands и sneakers
-    op.execute(
-        '''
-            DROP TRIGGER IF EXISTS insert_into_brands_and_sneakers_trigger ON brand_sneaker_info;
-            DROP FUNCTION IF EXISTS insert_into_brands_and_sneakers;
-        '''
-    )
+    op.execute("DROP TRIGGER IF EXISTS insert_into_sneakers_orders_view ON sneakers_orders_view;")
+    op.execute("DROP TRIGGER IF EXISTS update_sneakers_orders_view ON sneakers_orders_view;")
+    op.execute("DROP TRIGGER IF EXISTS delete_from_sneakers_orders_view ON sneakers_orders_view;")
+    op.execute('DROP VIEW IF EXISTS sneakers_orders_view;')
 
-    # Удаляем триггер для обновления данных в таблицах brands и sneakers
-    op.execute(
-        '''
-            DROP TRIGGER IF EXISTS update_brands_and_sneakers_trigger ON brand_sneaker_info;
-            DROP FUNCTION IF EXISTS update_brands_and_sneakers;
-        '''
-    )
-
-    # Удаляем триггер для удаления данных из таблиц brands и sneakers
-    op.execute(
-        '''
-            DROP TRIGGER IF EXISTS delete_from_brands_and_sneakers_trigger ON brand_sneaker_info;
-            DROP FUNCTION IF EXISTS delete_from_brands_and_sneakers;
-        '''
-    )
-
-    # Удаляем представление brand_sneaker_info
-    op.execute(
-        '''
-            DROP VIEW IF EXISTS brand_sneaker_info;
-        '''
-    )
+    op.execute("DROP MATERIALIZED VIEW IF EXISTS brand_sneaker_count;")

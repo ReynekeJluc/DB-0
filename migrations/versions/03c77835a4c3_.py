@@ -53,15 +53,15 @@ def upgrade() -> None:
     op.bulk_insert(
         sneakers,
         [
-            {'id': 2, 'size': 31, 'name': "Air Max", 'description': "Удобная обувь с хорошей амортизацией.", 'price': 120.00, 'brand_id': 3},
+            {'id': 2, 'size': 31, 'name': "Air Max", 'description': "Удобная обувь с хорошей амортизацией.", 'price': 120.00, 'brand_id': 1},
             {'id': 1, 'size': 30, 'name': "Club C Grounds", 'description': "Легкие и стильные кроссовки для бега.", 'price': 75.00, 'brand_id': 1},
             {'id': 3, 'size': 32, 'name': "UltraBoost", 'description': "Элегантный дизайн для повседневной носки.", 'price': 180.00, 'brand_id': 5},
             {'id': 4, 'size': 33, 'name': "Suede Classic", 'description': "Дышащая сетка, идеальная для лета.", 'price': 65.00, 'brand_id': 2},
             {'id': 5, 'size': 34, 'name': "574 Core", 'description': "Прочные материалы для долгого использования.", 'price': 80.00, 'brand_id': 4},
-            {'id': 6, 'size': 35, 'name': "Gel-Lyte III", 'description': "Кроссовки с ярким логотипом на боках.", 'price': 100.00, 'brand_id': 8},
-            {'id': 7, 'size': 36, 'name': "PLAY COMME DES GARCONS", 'description': "Отличное сцепление для активного отдыха.", 'price': 150.00, 'brand_id': 6},
+            {'id': 6, 'size': 35, 'name': "Gel-Lyte III", 'description': "Кроссовки с ярким логотипом на боках.", 'price': 100.00, 'brand_id': 1},
+            {'id': 7, 'size': 36, 'name': "PLAY COMME DES GARCONS", 'description': "Отличное сцепление для активного отдыха.", 'price': 150.00, 'brand_id': 3},
             {'id': 8, 'size': 37, 'name': "Old Skool", 'description': "Спортивная обувь с уникальным цветовым решением.", 'price': 60.00, 'brand_id': 7},
-            {'id': 9, 'size': 38, 'name': "Disruptor 2", 'description': "Мягкая подошва для комфорта и поддержки.", 'price': 85.00, 'brand_id': 10},
+            {'id': 9, 'size': 38, 'name': "Disruptor 2", 'description': "Мягкая подошва для комфорта и поддержки.", 'price': 85.00, 'brand_id': 4},
             {'id': 10, 'size': 39, 'name': "HOVR Phantom", 'description': "Идеальный выбор для тренировки и прогулок.", 'price': 110.00, 'brand_id': 9},
         ]
     )
@@ -114,9 +114,9 @@ def upgrade() -> None:
         [
             {'id': 1, 'provider_id': 1, 'date': "2024-10-01 10:00:00"},
             {'id': 2, 'provider_id': 7, 'date': "2024-10-01 10:01:00"},
-            {'id': 3, 'provider_id': 3, 'date': "2024-10-01 10:02:00"},
+            {'id': 3, 'provider_id': 1, 'date': "2024-10-01 10:02:00"},
             {'id': 4, 'provider_id': 5, 'date': "2024-10-01 10:03:00"},
-            {'id': 5, 'provider_id': 6, 'date': "2024-10-01 10:04:00"},
+            {'id': 5, 'provider_id': 1, 'date': "2024-10-01 10:04:00"},
             {'id': 6, 'provider_id': 4, 'date': "2024-10-01 10:05:00"},
             {'id': 7, 'provider_id': 2, 'date': "2024-10-01 10:06:00"},
         ]
@@ -127,11 +127,11 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.execute("TRUNCATE payment RESTART IDENTITY")
-    op.execute("TRUNCATE providers RESTART IDENTITY")
-    op.execute("TRUNCATE orders_sneakers RESTART IDENTITY")
-    op.execute("TRUNCATE orders RESTART IDENTITY")
-    op.execute("TRUNCATE sneakers RESTART IDENTITY")
-    op.execute("TRUNCATE brands RESTART IDENTITY")
+    op.execute("TRUNCATE payment RESTART IDENTITY CASCADE")
+    op.execute("TRUNCATE providers RESTART IDENTITY CASCADE")
+    op.execute("TRUNCATE orders_sneakers RESTART IDENTITY CASCADE")
+    op.execute("TRUNCATE orders RESTART IDENTITY CASCADE")
+    op.execute("TRUNCATE sneakers RESTART IDENTITY CASCADE")
+    op.execute("TRUNCATE brands RESTART IDENTITY CASCADE")
 
     op.execute("DROP TYPE IF EXISTS orderstatusenum CASCADE")
