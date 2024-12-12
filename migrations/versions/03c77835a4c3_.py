@@ -71,12 +71,12 @@ def upgrade() -> None:
         orders,
         [
             {'id': 1, 'order_date': "2024-09-25 10:00:00", 'status': "Shipped", 'name_customer': "John",  'pickup_code': {}},
-            {'id': 2, 'order_date': "2024-09-25 10:01:00", 'status': "Shipped", 'name_customer': "Maria", 'pickup_code': {}},
-            {'id': 3, 'order_date': "2024-09-25 10:02:00", 'status': "Delivered", 'name_customer': "David", 'pickup_code': {}},
-            {'id': 4, 'order_date': "2024-09-25 10:03:00", 'status': "Pending", 'name_customer': "Joseph", 'pickup_code': {}},
-            {'id': 5, 'order_date': "2024-09-25 10:04:00", 'status': "Delivered", 'name_customer': "Robert", 'pickup_code': {}},
-            {'id': 6, 'order_date': "2024-09-25 10:05:00", 'status': "Pending", 'name_customer': "Lola", 'pickup_code': {}},
-            {'id': 7, 'order_date': "2024-09-25 10:06:00", 'status': "Delivered", 'name_customer': "Olga", 'pickup_code': {}}
+            {'id': 2, 'order_date': "2024-01-25 10:01:00", 'status': "Shipped", 'name_customer': "Maria", 'pickup_code': {}},
+            {'id': 3, 'order_date': "2024-02-25 10:02:00", 'status': "Delivered", 'name_customer': "David", 'pickup_code': {}},
+            {'id': 4, 'order_date': "2024-03-25 10:03:00", 'status': "Pending", 'name_customer': "Joseph", 'pickup_code': {}},
+            {'id': 5, 'order_date': "2024-04-25 10:04:00", 'status': "Delivered", 'name_customer': "Robert", 'pickup_code': {}},
+            {'id': 6, 'order_date': "2023-05-25 10:05:00", 'status': "Pending", 'name_customer': "Lola", 'pickup_code': {}},
+            {'id': 7, 'order_date': "2024-06-25 10:06:00", 'status': "Delivered", 'name_customer': "Olga", 'pickup_code': {}}
         ]
     )
     op.execute("SELECT setval('orders_id_seq', (SELECT MAX(id) FROM orders));")  # Обновление последовательности orders
