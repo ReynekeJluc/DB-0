@@ -125,37 +125,44 @@ def upgrade() -> None:
     op.execute(
         '''
             CREATE MATERIALIZED VIEW marketability_view AS
-            WITH months AS (
+            WITH months AS (                                           -- создаем последовательность для показа месяцев
                 SELECT generate_series(1, 12) AS month
             ),
-            brand_stats AS (
+            brands_data AS (
                 SELECT
-                    EXTRACT(MONTH FROM o.order_date)::int AS month,
+                    DATE_PART('month', o.order_date)::int AS month,    -- извлекаем месяц как число
                     b.name AS brand_name,
-                    SUM(os.quantity) AS sneakers_sold,
-                    SUM(os.quantity * s.price) AS revenue
+                    SUM(os.quantity) AS sneakers_sold,                 -- кол-во проданных пар
+                    SUM(os.quantity * os.price) AS revenue              -- доход
                 FROM sneakers s
                 JOIN orders_sneakers os ON os.sneaker_id = s.id
                 JOIN orders o ON o.id = os.order_id
                 JOIN brands b ON b.id = s.brand_id
-                GROUP BY EXTRACT(MONTH FROM o.order_date), b.name
+                GROUP BY DATE_PART('month', o.order_date), b.name
             ),
-            ranked_brands AS (
+            brands_rank AS (                                          -- задаем каждому брэнду ранг (для получения самого популярного за месяц)
                 SELECT
                     month,
                     brand_name,
                     sneakers_sold,
                     RANK() OVER (PARTITION BY month ORDER BY sneakers_sold DESC) AS rank
-                FROM brand_stats
+                    -- делим данные на группы по месяцам (каждый месяц отдельно)
+                    -- далее сортируем по убыванию проданных пар и присваиваем ранг
+                    -- ранги полезнее, потому что можно получить не только лидера, но и топ-3 скажем (а так можно лимитом брать первый после сорта)
+                FROM brands_data
             ),
-            monthly_stats AS (
+            month_data AS (
                 SELECT
                     m.month,
-                    COALESCE(SUM(bs.sneakers_sold), 0) AS total_sneakers_sold,
+                    COALESCE(SUM(bs.sneakers_sold), 0) AS total_sneakers_sold,   -- заменяет NULL на 0, если данных за месяц нет
                     COALESCE(SUM(bs.revenue), 0) AS total_revenue,
-                    (SELECT brand_name FROM ranked_brands rb WHERE rb.month = m.month AND rb.rank = 1) AS most_popular_brand
+                    (
+                        SELECT brand_name 
+                        FROM brands_rank br 
+                        WHERE br.month = m.month AND br.rank = 1
+                    ) AS most_popular_brand
                 FROM months m
-                LEFT JOIN brand_stats bs ON bs.month = m.month
+                LEFT JOIN brands_data bs ON bs.month = m.month                   -- LEFT JOIN чтобы входили и месяцы в которых, продаж не было
                 GROUP BY m.month
             )
             SELECT
@@ -163,7 +170,7 @@ def upgrade() -> None:
                 total_sneakers_sold,
                 total_revenue,
                 COALESCE(most_popular_brand, 'No Data') AS most_popular_brand
-            FROM monthly_stats
+            FROM month_data
             ORDER BY month;
         '''
     )
@@ -177,26 +184,3 @@ def downgrade() -> None:
     # op.execute("DROP TRIGGER IF EXISTS delete_from_sneakers_orders_view ON receipt_view;")
     op.execute("DROP VIEW IF EXISTS receipt_view;")
     op.execute("DROP MATERIALIZED VIEW IF EXISTS marketability_view;")
-
-
-    # CREATE MATERIALIZED VIEW marketability_view AS
-            # SELECT
-            #     DATE_TRUNC('month', o.order_date) AS month,
-            #     SUM(os.quantity) AS total_sneakers_sold,  -- Общее количество проданных кроссовок
-            #     SUM(os.quantity * s.price) AS total_revenue,  -- Общая выручка
-            #     (
-            #         SELECT b.name 
-            #         FROM brands b 
-            #         JOIN sneakers s2 ON b.id = s2.brand_id
-            #         JOIN orders_sneakers os2 ON os2.sneaker_id = s2.id
-            #         JOIN orders o2 ON o2.id = os2.order_id
-            #         WHERE DATE_TRUNC('month', o2.order_date) = DATE_TRUNC('month', o.order_date)  -- Сравниваем с текущим месяцем
-            #         GROUP BY b.name 
-            #         ORDER BY SUM(os2.quantity) DESC
-            #         LIMIT 1
-            #     ) AS most_popular_brand  -- Наиболее продаваемый бренд
-            # FROM sneakers s
-            # JOIN orders_sneakers os ON os.sneaker_id = s.id
-            # JOIN orders o ON o.id = os.order_id
-            # GROUP BY month
-            # ORDER BY month;
