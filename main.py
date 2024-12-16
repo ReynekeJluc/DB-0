@@ -1,20 +1,31 @@
 import pg8000
+import json
 
 class Triggers:
 		def __init__(self, db_conn):
 				self.conn = db_conn
 				self.cursor = self.conn.cursor()
       
+		def get_all(self):
+				try:
+						self.cursor.execute("SELECT * FROM sneakers ORDER BY id")
+						rows = self.cursor.fetchall()
+
+						print(f"\033[32m{'id':<5}{'Название':<30}{'Цена':<10}{'Размер':<10}{'Описание':<50}{'брэнд id':<12}\033[0m")
+						for row in rows:
+							print(f"{row[0]:<5}{row[1]:<30}{row[2]:<10}{row[3]:<10}{row[4]:<50}{row[5]:<12}")
+				except Exception as e:
+						print(f"\033[31m{json.loads(str(e).replace("'", "\""))['M']}\033[0m")
 					
 		def add(self, name, desc, price, size, brand_id):
 				try:
-						self.cursor.execute("INSERT INTO sneakers (name, desc, price, size, brand_id) VALUES (%s, %s, %s, %s, %s)", 
+						self.cursor.execute("INSERT INTO sneakers (name, description, price, size, brand_id) VALUES (%s, %s, %s, %s, %s)", 
 													(name, desc, price, size, brand_id))
 						self.conn.commit()
-						print("Запись успешно добавлена")
+						print(f"\033[32mЗапись успешно добавлена\033[0m")
 				except Exception as e:
 						self.conn.rollback()
-						print(e)
+						print(f"\033[31m{json.loads(str(e).replace("'", "\""))['M']}\033[0m")
 						
 		def update(self, id, name, desc, price, size, brand_id):
 				try:
@@ -32,16 +43,17 @@ class Triggers:
 								(name, desc, price, size, brand_id, id.strip()))
 						self.conn.commit()
 
-						print("Запись успешно обновлена")
+						print(f"\033[32mЗапись успешно обновлена\033[0m")
 				except Exception as e:
 						self.conn.rollback()
-						print(e)
+						print(f"\033[31m{json.loads(str(e).replace("'", "\""))['M']}\033[0m")
 						
 
 def show_menu():
 		print("\033[31m\nМеню:\033[0m")
-		print("\033[32m1\033[0m. Добавить запись")
-		print("\033[32m2\033[0m. Обновить запись")
+		print("\033[32m1\033[0m. Вывести все записи")
+		print("\033[32m2\033[0m. Добавить запись")
+		print("\033[32m3\033[0m. Обновить запись")
 		print("\033[32m0\033[0m. Выйти")
         
 
@@ -58,13 +70,15 @@ def main():
 					
 					match choice.strip():
 							case "1":
+									triggers.get_all()
+							case "2":
 									name = input("Введите название кроссовка: ")
 									desc = input("Введите описание кроссовка: ")
 									price = input("Введите цену кроссовка: ")
 									size = input("Введите размер кроссовка: ")
 									brand_id = input("Введите id брэнда: ")
 									triggers.add(name, desc, price, size, brand_id)
-							case "2":
+							case "3":
 									id = input("Введите id кроссовка: ")
 									name = input("Введите название кроссовка: ")
 									desc = input("Введите описание кроссовка: ")

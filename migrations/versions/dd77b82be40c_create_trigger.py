@@ -26,32 +26,32 @@ def upgrade() -> None:
             CREATE OR REPLACE FUNCTION validate_sneakers_insert() 
             RETURNS TRIGGER AS $$
             BEGIN
-                NEW.name := TRIM(NEW.name);
-                NEW.description := NULLIF(TRIM(NEW.description), '');
-
-                IF LENGTH(NEW.name) <= 0 THEN
+                NEW.name := regexp_replace(TRIM(NEW.name), '\s+', ' ', 'g');
+                NEW.description := NULLIF(regexp_replace(TRIM(NEW.description), '\s+', ' ', 'g'), '');
+                
+                IF LENGTH(NEW.name) = 0 THEN
                     RAISE EXCEPTION 'Название не может состоять из пустой строки или набора пробелов';
                 END IF;
                     
                 -- Капитализация поля name (нужно ли мне название кроссовка капитализировать?)
                 -- NEW.name := INITCAP(NEW.name);
 
-                IF NEW.description = '' THEN
-                    NEW.description := NULL;
+                IF NEW.price is NULL THEN
+                    RAISE EXCEPTION 'Цена не введена';
                 END IF;
 
                 IF NEW.price < 0 THEN
                     RAISE EXCEPTION 'Цена не может быть отрицательной';
                 END IF;
 
-                IF NEW.size < 0 THEN
-                    RAISE EXCEPTION 'Размер не может быть отрицательным';
+                IF NEW.size IS NULL THEN
+                    RAISE EXCEPTION 'Размер не введен';
                 END IF;
 
-                IF NEW.size < 26 THEN
-                    RAISE EXCEPTION 'Обуви меньше 26 размера в России не продают';
+                IF NEW.size < 26 OR NEW.size > 76 THEN
+                    RAISE EXCEPTION 'Размер должен быть в диапазоне 26 - 76';
                 END IF;
-
+                
                 RETURN NEW;
             END;
             $$ LANGUAGE plpgsql;
@@ -68,32 +68,32 @@ def upgrade() -> None:
             CREATE OR REPLACE FUNCTION validate_sneakers_update() 
             RETURNS TRIGGER AS $$
             BEGIN
-                NEW.name := TRIM(NEW.name);
-                NEW.description := NULLIF(TRIM(NEW.description), '');
+                NEW.name := regexp_replace(TRIM(NEW.name), '\s+', ' ', 'g');
+                NEW.description := NULLIF(regexp_replace(TRIM(NEW.description), '\s+', ' ', 'g'), '');
 
-                IF LENGTH(NEW.name) <= 0 THEN
+                IF LENGTH(NEW.name) = 0 THEN
                     RAISE EXCEPTION 'Название не может состоять из пустой строки или набора пробелов';
                 END IF;
                 
                 -- Капитализация поля name
                 -- NEW.name := INITCAP(NEW.name);
 
-                IF NEW.description = '' THEN
-                    NEW.description := NULL;
+                IF NEW.price is NULL THEN
+                    RAISE EXCEPTION 'Цена не введена';
                 END IF;
 
                 IF NEW.price < 0 THEN
                     RAISE EXCEPTION 'Цена не может быть отрицательной';
                 END IF;
 
-                IF NEW.size < 0 THEN
-                    RAISE EXCEPTION 'Размер не может быть отрицательным';
+                IF NEW.size IS NULL THEN
+                    RAISE EXCEPTION 'Размер не введен';
                 END IF;
 
-                IF NEW.size < 26 THEN
-                    RAISE EXCEPTION 'Обуви меньше 26 размера в России не продают';
+                IF NEW.size < 26 OR NEW.size > 76 THEN
+                    RAISE EXCEPTION 'Размер должен быть в диапазоне 26 - 76';
                 END IF;
-
+                
                 RETURN NEW;
             END;
             $$ LANGUAGE plpgsql;

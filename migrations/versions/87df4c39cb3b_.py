@@ -128,9 +128,10 @@ def upgrade() -> None:
             onupdate='CASCADE'
         ),
         sa.PrimaryKeyConstraint("id"),
+        # sa.UniqueConstraint("name", name="uq_sneakers_name"),
         # sa.CheckConstraint('price >= 0', name='check_price_positive_1'),
         # sa.CheckConstraint('size >= 0', name='check_size_positive'),
-        #sa.CheckConstraint("LENGTH(TRIM(name)) > 0", name='check_name_length'),
+        # sa.CheckConstraint("LENGTH(TRIM(name)) > 0", name='check_name_length'),
         # sa.CheckConstraint("LENGTH(TRIM(description)) > 0", name='check_description_length')
     )
     op.create_table(
