@@ -32,9 +32,10 @@ def upgrade() -> None:
                 IF LENGTH(NEW.name) = 0 THEN
                     RAISE EXCEPTION 'Название не может состоять из пустой строки или набора пробелов';
                 END IF;
-                    
-                -- Капитализация поля name (нужно ли мне название кроссовка капитализировать?)
-                -- NEW.name := INITCAP(NEW.name);
+
+                IF NOT REGEXP_LIKE (NEW.name, '[a-zA-Z0-9]') THEN
+                    RAISE EXCEPTION 'Название должно состоять из латинских букв и чисел';
+                END IF;
 
                 IF NEW.price is NULL THEN
                     RAISE EXCEPTION 'Цена не введена';
@@ -74,10 +75,12 @@ def upgrade() -> None:
                 IF LENGTH(NEW.name) = 0 THEN
                     RAISE EXCEPTION 'Название не может состоять из пустой строки или набора пробелов';
                 END IF;
-                
-                -- Капитализация поля name
-                -- NEW.name := INITCAP(NEW.name);
 
+                IF NOT REGEXP_LIKE (NEW.name, '[a-zA-Z0-9]') THEN
+                    RAISE EXCEPTION 'Название должно состоять из латинских букв и чисел';
+                END IF;
+
+                
                 IF NEW.price is NULL THEN
                     RAISE EXCEPTION 'Цена не введена';
                 END IF;
