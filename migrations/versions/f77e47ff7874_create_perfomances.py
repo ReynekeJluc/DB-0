@@ -119,11 +119,7 @@ def upgrade() -> None:
 
 
 
-
-
-
-
-
+    #! брать или за год, или за последние 12 месяцев, нарастающий джоход, проверка на продаваемость, изменить оконную функцию
     op.execute(
         '''
             CREATE MATERIALIZED VIEW marketability_view AS
@@ -132,46 +128,58 @@ def upgrade() -> None:
             ),
             brands_data AS (
                 SELECT
-                    DATE_PART('month', o.order_date)::int AS month,    -- извлекаем месяц как число
+                    DATE_PART('month', o.order_date)::INTEGER AS month,    -- извлекаем месяц как число
                     b.name AS brand_name,
-                    SUM(os.quantity) AS sneakers_sold,                 -- кол-во проданных пар
+                    SUM(os.quantity) AS sneakers_sold,                  -- кол-во проданных пар
                     SUM(os.quantity * os.price) AS revenue              -- доход
                 FROM sneakers s
                 JOIN orders_sneakers os ON os.sneaker_id = s.id
                 JOIN orders o ON o.id = os.order_id
                 JOIN brands b ON b.id = s.brand_id
+                JOIN payment p ON p.id = o.id
+                WHERE EXTRACT(YEAR FROM o.order_date) = EXTRACT(YEAR FROM CURRENT_DATE) AND 
+                      o.status <> 'Canceled' AND
+                      p.id = o.id
                 GROUP BY month, b.name
             ),
-            brands_rank AS (                                          -- задаем каждому брэнду ранг (для получения самого популярного за месяц)
-                SELECT
-                    month,
-                    brand_name,
-                    sneakers_sold,
-                    RANK() OVER (PARTITION BY month ORDER BY sneakers_sold DESC) AS rank
-                    -- делим данные на группы по месяцам (каждый месяц отдельно)
-                    -- далее сортируем по убыванию проданных пар и присваиваем ранг
-                    -- ранги полезнее, потому что можно получить не только лидера, но и топ-3 скажем (а так можно лимитом брать первый после сорта)
-                FROM brands_data
+            -- brands_rank AS (                                          -- задаем каждому брэнду ранг (для получения самого популярного за месяц)
+            --     SELECT
+            --         month,
+            --         brand_name,
+            --         sneakers_sold,
+            --         RANK() OVER (PARTITION BY month ORDER BY sneakers_sold DESC) AS rank
+            --         -- делим данные на группы по месяцам (каждый месяц отдельно)
+            --         -- далее сортируем по убыванию проданных пар и присваиваем ранг
+            --         -- ранги полезнее, потому что можно получить не только лидера, но и топ-3 скажем (а так можно лимитом брать первый после сорта)
+            --     FROM brands_data
+            -- ),
+            cumulative_data AS (
+                 SELECT 
+                    m.month,
+                    SUM(COALESCE(SUM(bd.revenue), 0)) OVER (ORDER BY m.month ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS cumulative_revenue
+                    -- суммируем доход по брендам для каждого месяца
+                    -- UNBOUNDED PRECEDING - окно с первой строки
+                    -- CURRENT ROW - до текущего месяца
+                FROM months m
+                LEFT JOIN brands_data bd ON bd.month = m.month   -- месяцы без данных, чтобы включались
+                GROUP BY m.month
             ),
             month_data AS (
                 SELECT
                     m.month,
-                    COALESCE(SUM(bs.sneakers_sold), 0) AS total_sneakers_sold,   -- заменяет NULL на 0, если данных за месяц нет
-                    COALESCE(SUM(bs.revenue), 0) AS total_revenue,
-                    (
-                        SELECT brand_name 
-                        FROM brands_rank br 
-                        WHERE br.month = m.month AND br.rank = 1
-                    ) AS most_popular_brand
+                    COALESCE(SUM(bd.sneakers_sold), 0) AS total_sneakers_sold,   -- заменяет NULL на 0, если данных за месяц нет
+                    COALESCE(SUM(bd.revenue), 0) AS total_revenue,
+                    cd.cumulative_revenue AS cumulative_revenue
                 FROM months m
-                LEFT JOIN brands_data bs ON bs.month = m.month                   -- LEFT JOIN чтобы входили и месяцы в которых, продаж не было
-                GROUP BY m.month
+                LEFT JOIN brands_data bd ON bd.month = m.month                   -- LEFT JOIN чтобы входили и месяцы в которых, продаж не было
+                LEFT JOIN cumulative_data cd ON cd.month = m.month
+                GROUP BY m.month, cd.cumulative_revenue
             )
             SELECT
                 month,
                 total_sneakers_sold,
                 total_revenue,
-                COALESCE(most_popular_brand, 'No Data') AS most_popular_brand
+                cumulative_revenue
             FROM month_data
             ORDER BY month;
         '''
