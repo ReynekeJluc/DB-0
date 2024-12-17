@@ -24,22 +24,24 @@ def upgrade() -> None:
     # plpgsql процедурный язык PostgreSQL (нужный для написания триггеров, есть условия, отправка эксепшенов, циклы и тд.)
     op.execute(
         '''
-            CREATE VIEW receipt_view AS
-            SELECT
-                s.name AS s_name,
-                b.name AS b_name,
-                o.name_customer AS c_name,
-                o.order_date AS o_date,
-                p.date AS p_date,
-                os.quantity * os.price AS o_price,
-                pa.name AS p_name,
-                o.pickup_code AS p_code
-            FROM sneakers s
-            JOIN brands b ON b.id = s.brand_id
-            JOIN orders_sneakers os ON os.sneaker_id = s.id
-            JOIN orders o ON o.id = os.order_id
-            JOIN payment p ON p.id = o.id
-            JOIN providers pa ON pa.id = p.provider_id
+            CREATE VIEW receipt_view AS 
+            SELECT 
+                o.id AS o_id,
+                o.name_customer AS c_name, 
+                o.order_date AS o_date, 
+                p.date AS p_date, 
+                SUM(os.quantity * os.price) AS total_price,
+                STRING_AGG(s.name || ' (' ||  os.quantity || ')', ', ') AS sneakers_list,          -- Список товаров с количеством (обьединяет все строки из одной группы в одну строку)
+                o.status AS o_status,
+                pa.name AS p_name, 
+                o.pickup_code AS p_code 
+            FROM orders o
+            JOIN orders_sneakers os ON os.order_id = o.id
+            JOIN sneakers s ON s.id = os.sneaker_id
+            JOIN brands b ON b.id = s.brand_id 
+            JOIN payment p ON p.id = o.id 
+            JOIN providers pa ON pa.id = p.provider_id 
+            GROUP BY o.id, o.name_customer, o.order_date, p.date, o.status, pa.name, o.pickup_code::TEXT;    -- postgresql не может группировать json без явного преобразования
         '''
     )
 
@@ -138,7 +140,7 @@ def upgrade() -> None:
                 JOIN orders_sneakers os ON os.sneaker_id = s.id
                 JOIN orders o ON o.id = os.order_id
                 JOIN brands b ON b.id = s.brand_id
-                GROUP BY DATE_PART('month', o.order_date), b.name
+                GROUP BY month, b.name
             ),
             brands_rank AS (                                          -- задаем каждому брэнду ранг (для получения самого популярного за месяц)
                 SELECT
