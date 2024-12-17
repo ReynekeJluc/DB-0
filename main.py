@@ -34,7 +34,7 @@ class Triggers:
 								UPDATE sneakers 
 								SET 
 									name = %s, 
-									desc = %s, 
+									description = %s, 
 									price = %s, 
 									size = %s, 
 									brand_id = %s
@@ -63,7 +63,7 @@ def main():
 			conn = pg8000.connect(database="db_pdfy", user="db_pdfy_user", password="lO76kHaDkk8cntFD0nabQR9aRU3aXB3g", host="dpg-ct8nm1tds78s73ce0kdg-a.oregon-postgres.render.com", port="5432")
 
 			triggers = Triggers(conn)
-
+ 
 			while True:
 					show_menu()
 					choice = input("\033[33mВыберите операцию: \033[0m")
