@@ -25,7 +25,8 @@ class Triggers:
 						print(f"\033[32mЗапись успешно добавлена\033[0m")
 				except Exception as e:
 						self.conn.rollback()
-						print(f"\033[31m{json.loads(str(e).replace("'", "\""))['M']}\033[0m")
+						# print(f"\033[31m{json.loads(str(e).replace("'", "\""))['M']}\033[0m")
+						print(e)
 						
 		def update(self, id, name, desc, price, size, brand_id):
 				try:

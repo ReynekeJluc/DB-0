@@ -25,10 +25,37 @@ def upgrade() -> None:
         '''
             CREATE OR REPLACE FUNCTION validate_sneakers_insert() 
             RETURNS TRIGGER AS $$
+            DECLARE
+                punctuation_marks TEXT[];
+                sentences TEXT[];
+                formatted_sentences TEXT[];
             BEGIN
                 NEW.name := regexp_replace(TRIM(NEW.name), '\s+', ' ', 'g');
                 NEW.description := NULLIF(regexp_replace(TRIM(NEW.description), '\s+', ' ', 'g'), '');
                 
+                NEW.description := regexp_replace(NEW.description, '\.\.\.', '~', 'g');
+
+                punctuation_marks := array(
+                    select unnest(regexp_matches(NEW.description, '[.!?~]', 'g'))
+                );
+                --RAISE EXCEPTION '%', punctuation_marks; 
+                IF NEW.description IS NOT NULL THEN
+                    sentences := regexp_split_to_array(NEW.description, '\s*([.!?~])\s*');
+                    FOR i IN 1..array_length(sentences, 1) LOOP
+                        sentences[i] := initcap(sentences[i]);
+                        IF i < array_length(sentences, 1) THEN
+                            formatted_sentences := array_append(
+                                formatted_sentences, 
+                                sentences[i] || punctuation_marks[i]
+                            );
+                        ELSE
+                            formatted_sentences := array_append(formatted_sentences, sentences[i]);
+                        END IF;
+                    END LOOP;
+
+                    NEW.description := regexp_replace(array_to_string(formatted_sentences, ' '), '~', '...', 'g');
+                END IF;
+
                 IF LENGTH(NEW.name) = 0 THEN
                     RAISE EXCEPTION 'Название не может состоять из пустой строки или набора пробелов';
                 END IF;
