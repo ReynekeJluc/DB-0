@@ -11,9 +11,17 @@ class Triggers:
 						self.cursor.execute("SELECT * FROM sneakers ORDER BY id")
 						rows = self.cursor.fetchall()
 
-						print(f"\033[32m{'id':<5}{'Название':<30}{'Цена':<10}{'Размер':<10}{'Описание':<50}{'брэнд id':<12}\033[0m")
+						columns = [desc[0] for desc in self.cursor.description]
+						max_length = [0] * len(rows[0])
+
 						for row in rows:
-							print(f"{row[0]:<5}{row[1]:<30}{row[2]:<10}{row[3]:<10}{row[4]:<50}{row[5]:<12}")
+								for i, value in enumerate(row):
+										max_length[i] = max(max_length[i], len(str(value)))
+						format_string = " ".join(["{:<" + str(length + 3) + "}" for length in max_length])
+
+						print("\033[32m" + format_string.format(*columns) + "\033[0m")
+						for row in rows:
+								print(format_string.format(*row))
 				except Exception as e:
 						print(f"\033[31m{json.loads(str(e).replace("'", "\""))['M']}\033[0m")
 					
@@ -25,8 +33,8 @@ class Triggers:
 						print(f"\033[32mЗапись успешно добавлена\033[0m")
 				except Exception as e:
 						self.conn.rollback()
-						# print(f"\033[31m{json.loads(str(e).replace("'", "\""))['M']}\033[0m")
-						print(e)
+						print(f"\033[31m{json.loads(str(e).replace("'", "\""))['M']}\033[0m")
+						# print(e)
 						
 		def update(self, id, name, desc, price, size, brand_id):
 				try:
@@ -48,6 +56,7 @@ class Triggers:
 				except Exception as e:
 						self.conn.rollback()
 						print(f"\033[31m{json.loads(str(e).replace("'", "\""))['M']}\033[0m")
+						# print(e)
 						
 
 def show_menu():
@@ -103,3 +112,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+# Asd. asd. ASd. Asd... asd... ASd... Asd! asd! ASd! Asd? asd? ASd? ASd, ASD, asd.
